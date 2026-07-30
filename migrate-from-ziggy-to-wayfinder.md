@@ -21,6 +21,8 @@
 
 > ⚠️ **Wayfinder è ancora in beta** (v0.x). L'API può cambiare prima della v1.0. Per progetti esistenti, valuta la dimensione del codebase prima di procedere.
 
+> 🔴 **Non saltare la Fase 8.** Rimuovere Ziggy dal codice non basta: se Laravel Boost non viene aggiornato con `boost:update --discover`, le guidelines in `.ai/` restano quelle di Ziggy e gli agent continueranno a generare `route('nome.rotta')`.
+
 ---
 
 ## Fase 0 — Analisi e inventario
@@ -657,9 +659,124 @@ sail pnpm remove ziggy-js
 
 ---
 
-## Fase 8 — Verifica finale
+## Fase 8 — Laravel Boost: aggiornamento guidelines e skills
 
-### 8.1 Nessun residuo Ziggy
+> ⚠️ **Fase critica, non saltarla.** Boost genera le guidelines e gli skill in base ai pacchetti presenti in `composer.json`. Finché non le aggiorni, restano quelle di Ziggy e gli agent continueranno a scrivere `route('nome.rotta')` anche se Ziggy è già stato disinstallato.
+
+Boost include sia una **AI guideline** per Wayfinder (versione `core`) sia uno **skill** dedicato `wayfinder-development`. Aggiornare Boost è quindi sufficiente: le istruzioni corrette su come usare Wayfinder arrivano dal pacchetto, non vanno scritte a mano.
+
+### 8.1 Aggiorna la dipendenza
+
+```bash
+sail composer update laravel/boost
+```
+
+Se Boost non è installato nel progetto:
+
+```bash
+sail composer require laravel/boost --dev
+sail artisan boost:install
+```
+
+Durante il wizard di `boost:install`, seleziona gli agent in uso (Claude Code) e abilita guidelines e skills.
+
+### 8.2 Aggiorna le risorse Boost
+
+Il comando `boost:update` rigenera guidelines e skills locali allineandole ai pacchetti installati:
+
+```bash
+sail artisan boost:update
+```
+
+> 🔑 **Nel contesto di questa migrazione serve `--discover`.** Per default `boost:update` aggiorna solo le risorse già pubblicate nell'applicazione. Wayfinder è un pacchetto appena installato, quindi va usata l'opzione che fa scansionare il progetto alla ricerca di nuovi pacchetti e propone di pubblicare le relative guidelines e skills:
+
+```bash
+sail artisan boost:update --discover
+```
+
+Accetta la pubblicazione delle risorse Wayfinder quando il comando le propone.
+
+### 8.3 Automatizza gli aggiornamenti futuri
+
+Aggiungi `boost:update` agli script Composer, così le guidelines restano allineate a ogni `composer update`:
+
+```json
+{
+  "scripts": {
+    "post-update-cmd": [
+      "@php artisan boost:update --ansi"
+    ]
+  }
+}
+```
+
+### 8.4 Verifica che i riferimenti a Ziggy siano spariti
+
+```bash
+# Guidelines e skills di Boost
+grep -rn "ziggy\|Ziggy" .ai/ 2>/dev/null
+
+# File di contesto degli agent generati da Boost
+grep -rn "ziggy\|Ziggy" CLAUDE.md AGENTS.md 2>/dev/null
+
+# Verifica che le risorse Wayfinder siano state pubblicate
+ls .ai/skills/ | grep wayfinder
+grep -rln "wayfinder\|Wayfinder" .ai/ CLAUDE.md 2>/dev/null
+```
+
+Ti aspetti di trovare lo skill `wayfinder-development` in `.ai/skills/` e nessuna occorrenza di Ziggy.
+
+> I file generati da Boost (`.mcp.json`, `CLAUDE.md`, `AGENTS.md`, `boost.json`) sono rigenerabili con `boost:install` / `boost:update`: la documentazione suggerisce di metterli in `.gitignore`. Se nel tuo progetto sono versionati, ricordati di committare le modifiche dopo l'update.
+
+### 8.5 Se le guidelines Boost non bastano
+
+Solo se dopo `boost:update --discover` l'agent continua a generare `route()` — tipicamente perché il progetto ha un `CLAUDE.md` scritto a mano con istruzioni Ziggy pre-esistenti, indipendenti da Boost — aggiungi guidelines custom.
+
+Boost carica automaticamente i file `.md` o `.blade.php` presenti in `.ai/guidelines/`, includendoli nelle proprie guidelines al successivo `boost:install`. Crea `.ai/guidelines/wayfinder-project.md`:
+
+```markdown
+## Routing frontend — questo progetto usa Wayfinder, NON Ziggy
+
+Ziggy è stato rimosso dal progetto. La funzione globale `route()` non esiste più
+nel codice TypeScript/React.
+
+- **NON usare** `route('nome.rotta')` né alcun import da `ziggy-js`.
+- Importa le funzioni pre-generate: `import { show } from '@/actions/App/Http/Controllers/PostController'`
+- Per rotte senza controller (closure, `Route::inertia`): `import { nome } from '@/routes/nome'`
+- Per rilevare la rotta attiva usa la prop condivisa `currentRoute`, non `route().current()`.
+- Prima di scrivere codice che genera URL, controlla la firma della funzione nel file
+  generato in `resources/js/actions/`.
+- Le cartelle `resources/js/wayfinder/`, `actions/` e `routes/` sono in `.gitignore`
+  e rigenerate a ogni build: non modificarle mai a mano.
+```
+
+Poi rigenera:
+
+```bash
+sail artisan boost:install
+```
+
+> Boost supporta anche l'**override** delle sue guidelines built-in: creando un file con lo stesso path di una guideline Boost, la tua versione sostituisce quella di default. Usalo solo se devi cambiare le istruzioni Wayfinder ufficiali, non per aggiungerne.
+
+### 8.6 Verifica che l'agent segua le nuove istruzioni
+
+Apri una **nuova sessione** di Claude Code (le guidelines vengono caricate all'avvio) e testa con una richiesta che richiede una rotta:
+
+```
+Aggiungi un link alla pagina di modifica del post nella tabella dei post
+```
+
+L'output deve importare da `@/actions/...` e **non** contenere `route(`. Se ancora usa `route()`, in ordine:
+
+1. Verifica che `boost:update --discover` sia andato a buon fine e che `.ai/skills/wayfinder-development/` esista
+2. Controlla che `.ai/` e `CLAUDE.md` non contengano guidelines Ziggy residue (grep del punto 8.4)
+3. Aggiungi la guideline custom del punto 8.5 e rilancia `sail artisan boost:install`
+
+---
+
+## Fase 9 — Verifica finale
+
+### 9.1 Nessun residuo Ziggy
 
 ```bash
 # Frontend — nessun route() o import ziggy
@@ -674,22 +791,25 @@ grep -rn "@routes\|Ziggy\|ziggy" \
 
 # Package files
 grep -i "ziggy" composer.json package.json
+
+# Guidelines Boost e file di contesto degli agent
+grep -rn "ziggy\|Ziggy" .ai/ CLAUDE.md AGENTS.md 2>/dev/null
 ```
 
-### 8.2 TypeScript senza errori
+### 9.2 TypeScript senza errori
 
 ```bash
 sail pnpm exec tsc --noEmit
 ```
 
-### 8.3 Build di produzione
+### 9.3 Build di produzione
 
 ```bash
 # Genera i tipi prima di buildare (workaround bug #55)
 sail artisan wayfinder:generate && sail pnpm build
 ```
 
-### 8.4 Smoke test funzionale
+### 9.4 Smoke test funzionale
 
 ```bash
 sail up -d
@@ -723,6 +843,12 @@ Verifica manualmente nel browser:
 [ ] Import e dichiarazioni Ziggy rimosse da app.tsx e file .d.ts
 [ ] sail composer remove tightenco/ziggy eseguito
 [ ] sail pnpm remove ziggy-js eseguito
+[ ] laravel/boost aggiornato: sail composer update laravel/boost
+[ ] Risorse Boost aggiornate: sail artisan boost:update --discover
+[ ] Risorse Wayfinder pubblicate (.ai/skills/wayfinder-development/ presente)
+[ ] Nessun riferimento a Ziggy in .ai/ e CLAUDE.md (verificato con grep)
+[ ] boost:update aggiunto a post-update-cmd in composer.json (opzionale)
+[ ] Verificato in una nuova sessione che l'agent generi import da @/actions/ e non route()
 [ ] sail pnpm exec tsc --noEmit senza errori
 [ ] sail artisan wayfinder:generate && sail pnpm build senza errori
 [ ] Smoke test funzionale superato
@@ -737,4 +863,6 @@ Verifica manualmente nel browser:
 - [tighten/ziggy — GitHub](https://github.com/tighten/ziggy)
 - [Inertia.js — Manual Visits con Wayfinder](https://inertiajs.com/manual-visits)
 - [Inertia.js — Routing](https://inertiajs.com/routing)
+- [Laravel Boost — Keeping Boost Resources Updated](https://laravel.com/docs/13.x/boost#keeping-boost-resources-updated)
+- [Laravel Boost — AI Guidelines](https://laravel.com/docs/13.x/boost#ai-guidelines)
 - [Issue nota #55 — bug build Vite](https://github.com/laravel/wayfinder/issues/55)

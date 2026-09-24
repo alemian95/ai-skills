@@ -1,5 +1,7 @@
 # Errori ed eccezioni
 
+Fonti: [PHP The Right Way — Errors and Exceptions](https://phptherightway.com/#errors_and_exceptions), [PSR-3](https://www.php-fig.org/psr/psr-3/).
+
 ## Indice
 1. Il modello di PHP 8
 2. Gerarchia e scelta dell'eccezione
@@ -103,7 +105,7 @@ set_error_handler(static function (int $severity, string $message, string $file,
 
 ## 6. Logging
 
-- Usa PSR-3 (`Psr\Log\LoggerInterface`, implementazione Monolog) iniettato nel costruttore.
+- Usa PSR-3 (`Psr\Log\LoggerInterface`) iniettato nel costruttore; l'implementazione (Monolog, il logger del framework) si sceglie nella composition root.
 - Passa l'eccezione nel contesto con chiave `exception` (convenzione PSR-3): Monolog registra classe, messaggio, file, riga, traccia e catena `previous`.
 - Messaggi statici con segnaposto e dati nel contesto (`'Ordine {id} rifiutato'`, `['id' => $id]`): aggregabili e ricercabili.
 - Livelli: `error` per eccezioni non gestite, `warning` per anomalie gestite, `info` per eventi di business rilevanti, `debug` solo in sviluppo.
@@ -111,4 +113,9 @@ set_error_handler(static function (int $severity, string $message, string $file,
 
 ## 7. Nei framework
 
-Il framework possiede il gestore di ultimo livello: non registrare `set_error_handler` propri. In Laravel (11+) la configurazione sta in `bootstrap/app.php` → `withExceptions()`, con `report()`/`render()` per tipo di eccezione; le eccezioni di dominio possono implementare `report()`/`render()` o essere mappate lì. Il resto di questo file (scelta del tipo, eccezioni di dominio, dove catturare, `previous`) vale identico.
+Il framework possiede il gestore di ultimo livello: non registrare `set_error_handler` propri. La traduzione da eccezione di dominio a risposta si configura nel punto previsto dal framework:
+- **Laravel** (11+): `bootstrap/app.php` → `withExceptions()`, con `report()`/`render()` per tipo di eccezione; le eccezioni di dominio possono implementare `report()`/`render()` o essere mappate lì.
+- **Symfony**: listener o subscriber sull'evento `kernel.exception`; in produzione pagine d'errore del framework, mai dettagli.
+- **Mezzio / Slim**: il middleware di gestione errori all'inizio della pipeline (`psr.md` §5); per le API, risposte Problem Details (RFC 9457).
+
+Il resto di questo file (scelta del tipo, eccezioni di dominio, dove catturare, `previous`) vale identico.

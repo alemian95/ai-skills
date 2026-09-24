@@ -12,7 +12,7 @@
 9. Configurazione di produzione e dipendenze
 10. Nei framework
 
-Fonti di riferimento: OWASP (Top 10, Cheat Sheet Series), Paragon Initiative, manuale PHP.
+Fonti: [PHP The Right Way — Security](https://phptherightway.com/#security) (in particolare [Password Hashing](https://phptherightway.com/#password_hashing) e [Data Filtering](https://phptherightway.com/#data_filtering)), OWASP (Top 10, Cheat Sheet Series), Paragon Initiative, manuale PHP.
 
 ## 1. Principi
 
@@ -142,4 +142,8 @@ session.cookie_secure = 1
 
 ## 10. Nei framework
 
-Usa i meccanismi del framework invece di reimplementarli: in Laravel Form Request/validator, policy e gate per l'autorizzazione, middleware CSRF, `Hash`, `Crypt`, Eloquent/query builder con binding (attenzione a `whereRaw`, `orderByRaw`, `DB::raw`: legare sempre i valori, whitelist per gli identificatori), `$fillable` contro il mass assignment, Blade `{{ }}` per l'escape. Le regole di questo file restano valide per il codice che scrivi al di fuori di quei meccanismi.
+Usa i meccanismi del framework invece di reimplementarli. Le regole di questo file restano valide per il codice che scrivi al di fuori di quei meccanismi, e per verificare che siano usati correttamente.
+- **Laravel**: Form Request/validator, policy e gate, middleware CSRF, `Hash`, `Crypt`, Eloquent/query builder con binding (attenzione a `whereRaw`, `orderByRaw`, `DB::raw`: legare sempre i valori, whitelist per gli identificatori), `$fillable` contro il mass assignment, Blade `{{ }}` per l'escape.
+- **Symfony**: Form e Validator, Security con voter per l'autorizzazione, protezione CSRF dei form, PasswordHasher, Doctrine con parametri (mai DQL concatenato), Twig con escape automatico.
+- **Laminas / Mezzio**: `laminas-inputfilter` e `laminas-validator` al confine, `laminas-escaper` per l'escape per contesto, `mezzio-csrf` e `mezzio-authorization`.
+- **Senza framework**: le funzioni native descritte sopra, o componenti isolati (es. `symfony/validator`, `symfony/html-sanitizer`) dietro il confine.

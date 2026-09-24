@@ -1,5 +1,7 @@
 # Testo, date e internazionalizzazione
 
+Fonti: [PHP The Right Way — UTF-8](https://phptherightway.com/#php_and_utf8), [Date and Time](https://phptherightway.com/#date_and_time), [Internationalization and Localization](https://phptherightway.com/#i18n_l10n).
+
 ## Indice
 1. UTF-8 lungo tutta la catena
 2. Funzioni multibyte
@@ -56,7 +58,7 @@ Formattazione e confronto sensibili alla lingua (basati su ICU):
 
 ## 5. Traduzioni
 
-- Con un framework usa il suo sistema (Laravel `__()`, `trans_choice()` e file in `lang/`; Symfony Translation).
+- Con un framework usa il suo sistema (Laravel `__()`, `trans_choice()` e file in `lang/`; Symfony Translation; Laminas `laminas-i18n`).
 - Senza framework: `symfony/translation` (formati multipli, ICU MessageFormat) o gettext (`ext-gettext` + file `.po`/`.mo`, strumenti come Poedit).
 - Chiavi strutturate (`checkout.errors.card_declined`) facilitano l'organizzazione; frasi reali come chiave facilitano i traduttori. Scegli una convenzione e applicala in modo coerente.
 - Mai comporre frasi traducibili concatenando pezzi: l'ordine delle parole cambia tra lingue. Usa segnaposto con nome.

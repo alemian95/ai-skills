@@ -1,5 +1,7 @@
 # Dependency injection
 
+Fonti: [PHP The Right Way — Dependency Injection](https://phptherightway.com/#dependency_injection), [PSR-11](https://www.php-fig.org/psr/psr-11/).
+
 ## Indice
 1. Regole
 2. Composition root e service locator
@@ -74,5 +76,9 @@ Con runtime che mantengono il processo tra le richieste (FrankenPHP in modalità
 
 ## 7. Nei framework
 
+Le regole sopra valgono ovunque; cambia solo dove si scrive la composition root.
+
+- **Senza framework**: un file di definizioni del container PSR-11 scelto (o costruzione manuale con `new` per applicazioni piccole: un container non è obbligatorio).
+- **Laminas / Mezzio**: factory registrate nel service manager (`ConfigProvider` → `dependencies.factories`); `ReflectionBasedAbstractFactory` o `ConfigAbstractFactory` per evitare factory banali. La factory riceve il container: è composition root, la classe costruita no.
 - **Laravel**: binding nei service provider (`bind`, `singleton`, `scoped`), iniezione nel costruttore di controller, action, job, listener e comandi. Helper `app()`, `resolve()` e le facade sono service locator: seguendo la convenzione del progetto sono accettabili nel codice di glue (controller, provider), ma nelle classi di dominio preferisci l'iniezione per esplicitare le dipendenze e semplificare i test.
 - **Symfony**: servizi privati, autowiring e autoconfigurazione in `services.yaml`; niente `$this->container->get()` nei controller.

@@ -1,5 +1,7 @@
 # Strumenti
 
+Fonti: [PHP The Right Way — Dependency Management](https://phptherightway.com/#dependency_management), [Testing](https://phptherightway.com/#testing), [Xdebug](https://phptherightway.com/#xdebug), [Caching](https://phptherightway.com/#caching), [Documenting](https://phptherightway.com/#documenting), [PER Coding Style](https://www.php-fig.org/per/coding-style/).
+
 Regola generale: usa gli strumenti già configurati nel progetto e i loro comandi (`composer` scripts, `Makefile`, `vendor/bin/*`). Non introdurne di nuovi e non cambiare le configurazioni esistenti senza chiedere.
 
 ## Indice
@@ -27,7 +29,7 @@ Regola generale: usa gli strumenti già configurati nel progetto e i loro comand
 
 Lo stile si applica con uno strumento, non a mano e non in code review.
 
-**Senza framework** — PHP-CS-Fixer con PER Coding Style:
+**Predefinito** (senza framework, librerie, framework senza preset proprio) — PHP-CS-Fixer con PER Coding Style:
 
 ```php
 return new PhpCsFixer\Config()
@@ -46,7 +48,10 @@ return new PhpCsFixer\Config()
 
 Nelle versioni recenti i set sono nominati `@PER-CS3x0`, `@PHP8x4Migration` (le forme con il punto, es. `@PER-CS2.0`, restano come alias). `@PER-CS` senza versione segue sempre la revisione più recente e può cambiare lo stile a un aggiornamento: fissa la versione.
 
-**Laravel** — Pint (`vendor/bin/pint`), preset `laravel` in `pint.json`. Non affiancargli PHP-CS-Fixer. Per la verifica in CI: `pint --test`.
+**Preset di framework** — se il progetto ne usa uno, vale quello; non affiancare un secondo fixer.
+- **Laravel**: Pint (`vendor/bin/pint`), preset `laravel` in `pint.json`; in CI `pint --test`.
+- **Symfony**: PHP-CS-Fixer con `@Symfony` (e `@Symfony:risky`).
+- **Laminas / Mezzio**: `laminas/laminas-coding-standard` (PHP_CodeSniffer, `phpcs`/`phpcbf`).
 
 ## 3. Analisi statica: PHPStan
 

@@ -1,3 +1,7 @@
+---
+description: Migra un progetto Laravel + Inertia + React da Ziggy a Wayfinder, fase per fase
+---
+
 # Piano di Migrazione: Ziggy → Wayfinder
 ## Laravel + Inertia.js + React
 

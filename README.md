@@ -1,17 +1,17 @@
-# Ai-Prompts
+# ai-skills
 
 Marketplace di plugin per [Claude Code](https://code.claude.com): skill, comandi e agenti.
 
 ## Installazione
 
 ```
-/plugin marketplace add alemian95/Ai-Prompts
-/plugin install engineering@ai-prompts
-/plugin install php@ai-prompts
-/plugin install laravel@ai-prompts
+/plugin marketplace add alemian95/ai-skills
+/plugin install engineering@ai-skills
+/plugin install php@ai-skills
+/plugin install laravel@ai-skills
 ```
 
-Aggiornamento: `/plugin marketplace update ai-prompts`.
+Aggiornamento: `/plugin marketplace update ai-skills`.
 
 ## Plugin
 

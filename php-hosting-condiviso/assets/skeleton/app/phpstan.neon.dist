@@ -1,0 +1,12 @@
+parameters:
+    level: max
+    paths:
+        - ../index.php
+        - bootstrap.php
+        - web.php
+        - bin
+        - config
+        - migrations
+        - src
+        - tests
+    treatPhpDocTypesAsCertain: false

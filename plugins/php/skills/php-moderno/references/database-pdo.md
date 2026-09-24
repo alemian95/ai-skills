@@ -1,6 +1,8 @@
 # Database con PDO
 
-Vale per codice senza ORM o per query dirette. In Laravel usa query builder/Eloquent e passa a query grezze solo con binding (`DB::select('... where id = ?', [$id])`); in progetti senza framework che crescono, valuta Doctrine DBAL (astrazione) o un query builder prima di scrivere SQL concatenato a mano.
+Fonti: [PHP The Right Way — Databases](https://phptherightway.com/#databases), in particolare [PDO Extension](https://phptherightway.com/#pdo_extension) e [Abstraction Layers](https://phptherightway.com/#databases_abstraction_layers).
+
+Vale per codice senza ORM o per query dirette. Con un framework usa il suo strato dati e passa a SQL grezzo solo con binding: Laravel query builder/Eloquent (`DB::select('... where id = ?', [$id])`), Symfony Doctrine ORM/DBAL, Laminas `laminas-db` o Doctrine. In progetti senza framework che crescono, valuta Doctrine DBAL o un query builder prima di scrivere SQL concatenato a mano. Le regole su parametri, identificatori, transazioni e `utf8mb4` valgono per tutti.
 
 ## Indice
 1. Connessione

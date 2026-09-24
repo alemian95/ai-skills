@@ -1,5 +1,7 @@
 # Funzionalità del linguaggio PHP 8.x
 
+Fonti: [PHP The Right Way — Language Highlights](https://phptherightway.com/#language_highlights), [Use the Current Stable Version](https://phptherightway.com/#use_the_current_stable_version), manuale PHP (appendici di migrazione per versione).
+
 ## Indice
 1. Disponibilità per versione
 2. Linee guida d'uso

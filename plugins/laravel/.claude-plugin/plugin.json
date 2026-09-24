@@ -1,0 +1,8 @@
+{
+  "name": "laravel",
+  "version": "1.0.0",
+  "description": "Architettura Laravel (Action vs Service) e migrazione da Ziggy a Wayfinder.",
+  "author": {
+    "name": "Alessandro Mian"
+  }
+}

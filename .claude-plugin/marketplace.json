@@ -1,0 +1,26 @@
+{
+  "name": "ai-prompts",
+  "owner": {
+    "name": "Alessandro Mian"
+  },
+  "metadata": {
+    "description": "Skill, comandi e agenti per Claude Code: principi di progettazione, PHP moderno, Laravel."
+  },
+  "plugins": [
+    {
+      "name": "engineering",
+      "source": "./plugins/engineering",
+      "description": "Principi di progettazione (SOLID, DRY, YAGNI, SSOT) e scrittura di ADR."
+    },
+    {
+      "name": "php",
+      "source": "./plugins/php",
+      "description": "PHP 8.4+ moderno e progetti PHP per hosting condiviso senza SSH."
+    },
+    {
+      "name": "laravel",
+      "source": "./plugins/laravel",
+      "description": "Architettura Laravel (Action vs Service) e migrazione da Ziggy a Wayfinder."
+    }
+  ]
+}

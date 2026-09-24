@@ -1,0 +1,8 @@
+{
+  "name": "php",
+  "version": "1.0.0",
+  "description": "PHP 8.4+ moderno e progetti PHP per hosting condiviso senza SSH.",
+  "author": {
+    "name": "Alessandro Mian"
+  }
+}

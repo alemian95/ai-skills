@@ -1,0 +1,8 @@
+{
+  "name": "engineering",
+  "version": "1.0.0",
+  "description": "Principi di progettazione (SOLID, DRY, YAGNI, SSOT) e scrittura di ADR.",
+  "author": {
+    "name": "Alessandro Mian"
+  }
+}

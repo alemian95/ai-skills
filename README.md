@@ -27,6 +27,7 @@ Aggiornamento: `/plugin marketplace update ai-skills`.
 
 - `principi-sviluppo.md`: principi di sviluppo globali
 - `regole-sicurezza.md`: regole sul flusso Git
+- `laravel-architettura.md`: architettura di un progetto Laravel + React, da usare insieme a [Laravel Boost](https://github.com/laravel/boost). Non va incollato nel `CLAUDE.md`, perché Boost lo rigenera: copialo in `.ai/guidelines/architettura.md` del progetto e lancia `php artisan boost:update` (o `boost:install`). Boost lo unisce alle sue guideline.
 
 ## Struttura
 

@@ -1,8 +1,12 @@
 # ai-skills
 
-Marketplace di plugin per [Claude Code](https://code.claude.com): skill, comandi e agenti.
+**English** · [Italiano](README.it.md)
 
-## Installazione
+Plugin marketplace for [Claude Code](https://code.claude.com): skills, commands and agents.
+
+> The skill and command content is written in Italian. Claude follows it regardless of the language you work in.
+
+## Installation
 
 ```
 /plugin marketplace add alemian95/ai-skills
@@ -11,35 +15,35 @@ Marketplace di plugin per [Claude Code](https://code.claude.com): skill, comandi
 /plugin install laravel@ai-skills
 ```
 
-Aggiornamento: `/plugin marketplace update ai-skills`.
+Update: `/plugin marketplace update ai-skills`.
 
-## Plugin
+## Plugins
 
-| Plugin | Contenuto |
+| Plugin | Content |
 |---|---|
-| `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (ADR in formato Nygard) |
-| `php` | skill `php-moderno` (PHP 8.4+) · skill `php-hosting-condiviso` (hosting senza SSH, deploy FTP) |
-| `laravel` | skill `laravel-action-vs-service` · comando `/laravel:migrate-ziggy-to-wayfinder` |
+| `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (Nygard-format ADRs) |
+| `php` | skill `php-moderno` (modern PHP 8.4+) · skill `php-hosting-condiviso` (shared hosting without SSH, FTP deploy) |
+| `laravel` | skill `laravel-action-vs-service` · command `/laravel:migrate-ziggy-to-wayfinder` |
 
-## Snippet per CLAUDE.md
+## CLAUDE.md snippets
 
-`claude-md/` contiene regole da copiare a mano in `~/.claude/CLAUDE.md` o nel `CLAUDE.md` di progetto (un plugin non le può installare):
+`claude-md/` contains rules to copy by hand into `~/.claude/CLAUDE.md` or a project's `CLAUDE.md` (a plugin cannot install them):
 
-- `principi-sviluppo.md`: principi di sviluppo globali
-- `regole-sicurezza.md`: regole sul flusso Git
-- `laravel-architettura.md`: architettura di un progetto Laravel + React, da usare insieme a [Laravel Boost](https://github.com/laravel/boost). Non va incollato nel `CLAUDE.md`, perché Boost lo rigenera: copialo in `.ai/guidelines/architettura.md` del progetto e lancia `php artisan boost:update` (o `boost:install`). Boost lo unisce alle sue guideline.
+- `principi-sviluppo.md`: global development principles
+- `regole-sicurezza.md`: Git workflow rules
+- `laravel-architettura.md`: architecture of a Laravel + React project, meant to be used with [Laravel Boost](https://github.com/laravel/boost). Don't paste it into `CLAUDE.md`, because Boost regenerates that file: copy it to the project's `.ai/guidelines/architettura.md` and run `php artisan boost:update` (or `boost:install`). Boost merges it with its own guidelines.
 
-## Struttura
+## Structure
 
 ```
-.claude-plugin/marketplace.json     # elenco dei plugin
+.claude-plugin/marketplace.json     # plugin list
 plugins/<plugin>/
-  .claude-plugin/plugin.json        # manifest (nome, versione)
-  skills/<skill>/SKILL.md           # skill, con eventuali references/ e assets/
-  commands/<comando>.md             # slash command
-  agents/<agente>.md                # subagent
+  .claude-plugin/plugin.json        # manifest (name, version)
+  skills/<skill>/SKILL.md           # skill, with optional references/ and assets/
+  commands/<command>.md             # slash command
+  agents/<agent>.md                 # subagent
 ```
 
-Per aggiungere qualcosa basta creare il file nella cartella giusta di un plugin esistente e aumentare `version` nel suo `plugin.json`. Un plugin nuovo va anche registrato in `marketplace.json`.
+To add something, create the file in the right folder of an existing plugin and bump `version` in its `plugin.json`. A new plugin must also be registered in `marketplace.json`.
 
-Verifica prima del push: `claude plugin validate .`
+Check before pushing: `claude plugin validate .`

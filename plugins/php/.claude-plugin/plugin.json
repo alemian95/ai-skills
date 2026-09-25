@@ -1,6 +1,6 @@
 {
   "name": "php",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Modern PHP 8.4+ and PHP projects for shared hosting.",
   "author": {
     "name": "Alessandro Mian"

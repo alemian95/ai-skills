@@ -5,26 +5,26 @@ description: Use when designing or refactoring backend business logic in a Larav
 
 # Laravel: Action vs Service
 
-## Principio
+## Principle
 
-**L'Action è l'operazione di business. Il Service è un pezzo di logica pura, stateless, riusabile — oppure un wrapper di dipendenza esterna.**
+**The Action is the business operation. The Service is a piece of pure, stateless, reusable logic — or a wrapper around an external dependency.**
 
-La logica di orchestrazione di un'operazione vive *nell'Action*, non in un Service dedicato. Il Service esiste solo quando c'è riuso reale (2+ chiamanti) o quando va incapsulata una dipendenza esterna per testabilità. Niente strati per ipotesi future.
+The orchestration logic of an operation lives *in the Action*, not in a dedicated Service. A Service exists only when there is real reuse (2+ callers) or when an external dependency must be encapsulated for testability. No layers for hypothetical future needs.
 
-Questo modello è quello dominante nella community Laravel (Spatie, Lorisleiva, Nuno Maduro): *fat action, service riusabile*. Non è il "default core" del framework — Laravel core non ha né Action né Service layer — ma è la convenzione di riferimento per progetti strutturati.
+This model is the dominant one in the Laravel community (Spatie, Lorisleiva, Nuno Maduro): *fat action, reusable service*. It is not the framework's "core default" — Laravel core has neither an Action nor a Service layer — but it is the reference convention for structured projects.
 
-## L'Action come entry-point uniforme
+## The Action as a uniform entry point
 
-Un'Action è **context-free**: lo stesso codice viene invocato da HTTP, console, Job o scheduler senza cambiare. Il chiamante prepara un DTO tipizzato, invoca `handle()`, riceve un risultato tipizzato.
+An Action is **context-free**: the same code is invoked from HTTP, console, Job or scheduler without changes. The caller prepares a typed DTO, invokes `handle()`, and receives a typed result.
 
 ```php
 namespace App\Contracts;
 
 /**
- * Contratto comune per tutte le Action.
+ * Common contract for all Actions.
  *
- * I generics vivono solo in PHPDoc: PHP non ha generics a runtime,
- * la type-safety la fornisce PHPStan/Psalm a livello alto.
+ * Generics live only in PHPDoc: PHP has no runtime generics,
+ * type safety is provided by PHPStan/Psalm at a high level.
  *
  * @template TInput
  * @template TOutput
@@ -39,7 +39,7 @@ interface Action
 }
 ```
 
-Ogni Action dichiara i tipi concreti nel proprio docblock:
+Each Action declares its concrete types in its own docblock:
 
 ```php
 namespace App\Actions\Users;
@@ -62,66 +62,66 @@ final class RegisterUser implements Action
             ]);
             $user->assignRole('customer');
 
-            // logica di orchestrazione: sta QUI, non in un Service
+            // orchestration logic: it lives HERE, not in a Service
             $this->subscriptions->startTrial($user);
 
-            event(new UserRegistered($user)); // side-effect opzionale → Listener queued
+            event(new UserRegistered($user)); // optional side-effect → queued Listener
             return $user;
         });
     }
 }
 ```
 
-**Perché `handle()` e non `__invoke()`:** `handle()` è la convenzione del core Laravel per un'unità di lavoro (Job, Command, Listener, Notification). Con un'interfaccia comune tipizzata è più leggibile per l'analisi statica e abilita un eventuale action bus generico. `__invoke()` resta la convenzione degli invokable controller, non delle Action.
+**Why `handle()` and not `__invoke()`:** `handle()` is the Laravel core convention for a unit of work (Job, Command, Listener, Notification). With a common typed interface it is more readable for static analysis and enables an optional generic action bus. `__invoke()` remains the convention for invokable controllers, not for Actions.
 
-## Decisione: dove metto questa logica?
+## Decision: where do I put this logic?
 
 ```dot
 digraph decide {
     rankdir=TB;
-    Q1 [shape=diamond, label="È un'operazione di business\ncompleta avviata da un trigger?\n(HTTP / API / Job / Command / cron)"];
-    Q2 [shape=diamond, label="È un wrapper di\ndipendenza ESTERNA?\n(SDK, API HTTP, filesystem terzo)"];
-    Q3 [shape=diamond, label="È logica pura/stateless\n(calcolo, validazione dominio,\nnormalizzazione, formatting)\nriusata da 2+ Action?"];
+    Q1 [shape=diamond, label="Is it a complete business\noperation started by a trigger?\n(HTTP / API / Job / Command / cron)"];
+    Q2 [shape=diamond, label="Is it a wrapper around an\nEXTERNAL dependency?\n(SDK, HTTP API, third-party filesystem)"];
+    Q3 [shape=diamond, label="Is it pure/stateless logic\n(calculation, domain validation,\nnormalization, formatting)\nreused by 2+ Actions?"];
     A [shape=box, label="Action\nhandle(DTO): Result"];
-    S1 [shape=box, label="Service + Contract\n(sempre, anche 1 chiamante:\nmotivazione = testabilità)"];
-    S2 [shape=box, label="Service\n(logica di dominio condivisa)"];
-    INLINE [shape=box, label="Resta inline nell'Action\n(o FormRequest / Resource /\nscope Eloquent)"];
+    S1 [shape=box, label="Service + Contract\n(always, even with 1 caller:\nreason = testability)"];
+    S2 [shape=box, label="Service\n(shared domain logic)"];
+    INLINE [shape=box, label="Stays inline in the Action\n(or FormRequest / Resource /\nEloquent scope)"];
 
-    Q1 -> A [label="sì"];
+    Q1 -> A [label="yes"];
     Q1 -> Q2 [label="no"];
-    Q2 -> S1 [label="sì"];
+    Q2 -> S1 [label="yes"];
     Q2 -> Q3 [label="no"];
-    Q3 -> S2 [label="sì"];
-    Q3 -> INLINE [label="no (1 solo chiamante)"];
+    Q3 -> S2 [label="yes"];
+    Q3 -> INLINE [label="no (only 1 caller)"];
 }
 ```
 
 ## Quick Reference
 
-| Tipo | Quando | Forma | Riuso |
+| Type | When | Shape | Reuse |
 |---|---|---|---|
-| **Action** | Operazione di business completa invocabile da Controller/Job/Command/scheduler. Contiene l'orchestrazione. È il default. | `class Xxx implements Action { public function handle(TInput): TOutput }` | Bassa: 1 Action = 1 operazione |
-| **Service (dominio)** | Logica **pura, stateless, riusata da 2+ Action** — calcoli, regole di dominio, validazioni, normalizzazioni, formatting | Classe con metodi pubblici stateless, dietro Contract iniettabile | Media-alta |
-| **Service (wrapper)** | Wrapper di **dipendenza esterna** — SDK, API HTTP, filesystem/queue di terzi — **sempre**, anche con 1 solo chiamante | Classe che implementa un Contract, iniettata nelle Action | Bassa OK: motivazione = testabilità, non riuso |
+| **Action** | Complete business operation invocable from Controller/Job/Command/scheduler. Contains the orchestration. It is the default. | `class Xxx implements Action { public function handle(TInput): TOutput }` | Low: 1 Action = 1 operation |
+| **Service (domain)** | **Pure, stateless logic reused by 2+ Actions** — calculations, domain rules, validations, normalizations, formatting | Class with stateless public methods, behind an injectable Contract | Medium-high |
+| **Service (wrapper)** | Wrapper around an **external dependency** — SDK, HTTP API, third-party filesystem/queue — **always**, even with only 1 caller | Class implementing a Contract, injected into the Actions | Low is OK: reason = testability, not reuse |
 
-## Regole non negoziabili
+## Non-negotiable rules
 
-1. **Action = operazione, non contenitore vuoto.** L'orchestrazione (crea record, assegna ruoli, coordina più Service, gestisce la transazione, emette eventi) vive nell'Action. Non spostarla in un Service "di orchestrazione" — quello è l'anti-pattern service anemico.
-2. **Action ha `handle()`** definito dall'interfaccia `Action<TInput, TOutput>`. Mai `execute()`, `run()`, o `__invoke()`. Una classe = una operazione = un metodo pubblico.
-3. **Service = stateless.** Nessuna proprietà mutabile tra chiamate. Se serve stato, è un'Action o un Job.
-4. **Service sempre dietro un Contract** (interface in `App\Contracts\...`) bindato nel `ServiceProvider`. Le Action iniettano l'interface, non la classe concreta.
-5. **Controller sottile**: `FormRequest` → `DTO` → `$action->handle($dto)` → `Resource`. Niente Eloquent diretto nel Controller, niente chiamate a SDK, niente logica dopo l'invocazione dell'Action che non sia mapping di response.
-6. **Side-effects opzionali** (email, analytics, webhook) → `Event` + `Listener` queued. Non sincroni dentro l'Action. Se Segment è down, la registrazione non fallisce.
-7. **DTO tipizzato** (`spatie/laravel-data` o readonly class) tra `FormRequest` e Action. Mai array sciolti.
-8. **Niente Use Case.** I workflow complessi sono Action che orchestrano più Service e/o sub-Action. Nessuno strato intermedio dedicato.
+1. **Action = operation, not an empty container.** The orchestration (creating records, assigning roles, coordinating multiple Services, managing the transaction, emitting events) lives in the Action. Do not move it into an "orchestration" Service — that is the anemic service anti-pattern.
+2. **An Action has `handle()`**, defined by the `Action<TInput, TOutput>` interface. Never `execute()`, `run()`, or `__invoke()`. One class = one operation = one public method.
+3. **Service = stateless.** No mutable properties between calls. If state is needed, it is an Action or a Job.
+4. **A Service is always behind a Contract** (interface in `App\Contracts\...`) bound in the `ServiceProvider`. Actions inject the interface, not the concrete class.
+5. **Thin Controller**: `FormRequest` → `DTO` → `$action->handle($dto)` → `Resource`. No direct Eloquent in the Controller, no SDK calls, no logic after the Action invocation other than response mapping.
+6. **Optional side-effects** (email, analytics, webhooks) → queued `Event` + `Listener`. Not synchronous inside the Action. If Segment is down, registration does not fail.
+7. **Typed DTO** (`spatie/laravel-data` or a readonly class) between `FormRequest` and Action. Never loose arrays.
+8. **No Use Cases.** Complex workflows are Actions that orchestrate multiple Services and/or sub-Actions. No dedicated intermediate layer.
 
-## Decision rules con esempi
+## Decision rules with examples
 
 ### → Action
 
-> "Registra un utente", "Pubblica un post", "Annulla un ordine", "Checkout completo", "Importa un CSV di anagrafiche"
+> "Register a user", "Publish a post", "Cancel an order", "Full checkout", "Import a CSV of customer records"
 
-Anche il workflow complesso resta un'Action: orchestra i passi, delega i calcoli ai Service, gestisce una sola transazione.
+Even a complex workflow stays an Action: it orchestrates the steps, delegates calculations to Services, and manages a single transaction.
 
 ```php
 /**
@@ -130,8 +130,8 @@ Anche il workflow complesso resta un'Action: orchestra i passi, delega i calcoli
 final class Checkout implements Action
 {
     public function __construct(
-        private readonly PricingService $pricing,   // logica pura riusata
-        private readonly PaymentGateway $payments,   // wrapper SDK esterno
+        private readonly PricingService $pricing,   // reused pure logic
+        private readonly PaymentGateway $payments,   // external SDK wrapper
     ) {}
 
     public function handle(mixed $input): Order
@@ -147,60 +147,60 @@ final class Checkout implements Action
 }
 ```
 
-Nota: `Checkout` ha 3+ passi e branching potenziale, ma resta Action. Nel vecchio modello sarebbe stato un "Use Case" — non serve.
+Note: `Checkout` has 3+ steps and potential branching, but it stays an Action. In the old model it would have been a "Use Case" — not needed.
 
-### → Service (wrapper esterno)
+### → Service (external wrapper)
 
-> Wrappa Stripe SDK, un client HTTP di terzi, un client S3 custom, un parser PDF.
+> Wraps the Stripe SDK, a third-party HTTP client, a custom S3 client, a PDF parser.
 
-Crea **sempre** Service + Contract, anche con 1 solo chiamante. La motivazione è testabilità e sostituibilità: mai chiamare un SDK esterno direttamente in un'Action.
+**Always** create Service + Contract, even with only 1 caller. The reason is testability and replaceability: never call an external SDK directly in an Action.
 
 ```php
 // App\Contracts\PaymentGateway  (interface)
 // App\Services\Payments\StripeGateway  implements PaymentGateway
-// binding nel ServiceProvider
+// binding in the ServiceProvider
 ```
 
-### → Service (dominio)
+### → Service (domain)
 
-> `PricingService::calculate()`, `TaxService`, un normalizzatore di indirizzi, un formatter di IBAN.
+> `PricingService::calculate()`, `TaxService`, an address normalizer, an IBAN formatter.
 
-Crea Service **solo con 2+ chiamanti reali**. È logica pura, stateless, senza side-effect. Con un solo chiamante: la logica resta nell'Action (o in un metodo privato dell'Action).
+Create a Service **only with 2+ real callers**. It is pure, stateless logic with no side-effects. With a single caller: the logic stays in the Action (or in a private method of the Action).
 
-### → Resta inline
+### → Stays inline
 
-Validazione `unique`, autorizzazione, query Eloquent semplici, format di response → vivono in `FormRequest`, `Policy`, scope Eloquent, `Resource`. Non serve un Service "per pulizia".
+`unique` validation, authorization, simple Eloquent queries, response formatting → live in `FormRequest`, `Policy`, Eloquent scopes, `Resource`. There is no need for a Service "for tidiness".
 
-## Rationalizzazioni da rifiutare
+## Rationalizations to reject
 
-| Tentazione | Verità |
+| Temptation | Reality |
 |---|---|
-| "Sposto tutta la logica dell'operazione in un Service, l'Action fa solo da passacarte" | No. Questo produce service anemici/passthrough. L'orchestrazione è il lavoro dell'Action. Il Service è per pezzi *puri e riusati*, non per l'intera operazione. |
-| "Estraggo subito un Service di dominio, magari servirà" | YAGNI. Logica nell'Action finché non hai 2+ chiamanti reali. |
-| "Uso `execute()` / `__invoke()`, è più esplicito" | No. La convenzione è `handle()` dall'interfaccia `Action`. Esplicito = la classe ha un solo metodo pubblico. |
-| "Faccio un Service stateful con proprietà" | No. Service = stateless, idempotente per chiamata. Serve stato → Action o Job. |
-| "Chiamo l'SDK Stripe direttamente nell'Action" | No. SDK esterni sempre dietro Contract — testabilità + sostituibilità. |
-| "Invio l'email sincrona dentro l'Action" | No, se è side-effect opzionale: Event + Listener queued. L'Action fallisce solo per ciò che è essenziale alla coerenza transazionale. |
-| "Il workflow è complesso, creo un layer Use Case" | No. Resta Action che orchestra Service e sub-Action. Nessuno strato Use Case. |
+| "I'll move all of the operation's logic into a Service, the Action just passes things along" | No. This produces anemic/passthrough services. Orchestration is the Action's job. The Service is for *pure and reused* pieces, not for the whole operation. |
+| "I'll extract a domain Service right away, it might come in handy" | YAGNI. Logic stays in the Action until you have 2+ real callers. |
+| "I'll use `execute()` / `__invoke()`, it's more explicit" | No. The convention is `handle()` from the `Action` interface. Explicit = the class has a single public method. |
+| "I'll make a stateful Service with properties" | No. Service = stateless, idempotent per call. Need state → Action or Job. |
+| "I'll call the Stripe SDK directly in the Action" | No. External SDKs always behind a Contract — testability + replaceability. |
+| "I'll send the email synchronously inside the Action" | No, if it is an optional side-effect: queued Event + Listener. The Action fails only for what is essential to transactional consistency. |
+| "The workflow is complex, I'll create a Use Case layer" | No. It stays an Action that orchestrates Services and sub-Actions. No Use Case layer. |
 
-## Red flags — fermati e ripensa
+## Red flags — stop and rethink
 
-- Un **Service con un solo chiamante** che non wrappa una dipendenza esterna → non è un Service, la logica torna nell'Action.
-- Un Service che **orchestra un'intera operazione** (crea record + coordina + emette eventi) → è un'Action mascherata. Le operazioni sono Action.
-- Il Service ha **stato** (proprietà mutabili tra chiamate) → non è un Service.
-- Il Controller ha **logica dopo `$action->handle(...)`** che non sia mapping di response → appartiene all'Action.
-- L'Action chiama un'altra Action → composizione OK; ma se diventa una catena profonda di 3+ sub-Action, rivedi i confini.
-- Stessa logica **duplicata in 2+ Action** → *ora* è il momento di estrarre un Service, non prima.
-- Un'Action con **`handle()` > ~50 righe** → estrai metodi privati nominati, o una sotto-Action, o un Service di dominio se la logica è pura e riusabile.
+- A **Service with a single caller** that does not wrap an external dependency → it is not a Service; the logic goes back into the Action.
+- A Service that **orchestrates an entire operation** (creates records + coordinates + emits events) → it is a disguised Action. Operations are Actions.
+- The Service has **state** (mutable properties between calls) → it is not a Service.
+- The Controller has **logic after `$action->handle(...)`** other than response mapping → it belongs in the Action.
+- An Action calls another Action → composition is OK; but if it becomes a deep chain of 3+ sub-Actions, revisit the boundaries.
+- The same logic **duplicated in 2+ Actions** → *now* is the time to extract a Service, not before.
+- An Action with **`handle()` > ~50 lines** → extract named private methods, or a sub-Action, or a domain Service if the logic is pure and reusable.
 
-## Layout file (convenzione)
+## File layout (convention)
 
 ```
 app/
 ├── Contracts/
-│   ├── Action.php                    # interfaccia generica comune
-│   ├── PaymentGateway.php            # contract wrapper esterno
-│   └── PricingService.php            # contract servizio di dominio
+│   ├── Action.php                    # common generic interface
+│   ├── PaymentGateway.php            # external wrapper contract
+│   └── PricingService.php            # domain service contract
 ├── Actions/
 │   ├── Users/
 │   │   └── RegisterUser.php          # implements Action<RegisterUserData, User>
@@ -210,8 +210,8 @@ app/
 │   ├── Payments/
 │   │   └── StripeGateway.php         # implements PaymentGateway (wrapper)
 │   └── Pricing/
-│       └── DefaultPricingService.php # implements PricingService (dominio)
-├── Data/                             # DTO tipizzati
+│       └── DefaultPricingService.php # implements PricingService (domain)
+├── Data/                             # typed DTOs
 │   ├── Users/
 │   │   └── RegisterUserData.php
 │   └── Orders/
@@ -223,13 +223,13 @@ app/
     └── TrackUserRegistered.php       # ShouldQueue
 ```
 
-## Checklist quando aggiungi un endpoint
+## Checklist when adding an endpoint
 
-1. `FormRequest` per validazione + autorizzazione
-2. `DTO` (readonly) per i dati validati
+1. `FormRequest` for validation + authorization
+2. `DTO` (readonly) for the validated data
 3. Controller: `return new Resource($action->handle($dto))`
-4. `Action` con `handle()` — orchestra l'operazione, gestisce la transazione, delega calcoli puri ai Service
-5. `Service` (dietro Contract) solo per wrapper esterni o logica pura riusata da 2+ Action
-6. `Event` + `Listener` queued per side-effects opzionali
-7. `Resource` per la response
-8. Test: feature test sull'endpoint + unit test sull'Action (con Service mockati via Contract)
+4. `Action` with `handle()` — orchestrates the operation, manages the transaction, delegates pure calculations to Services
+5. `Service` (behind a Contract) only for external wrappers or pure logic reused by 2+ Actions
+6. Queued `Event` + `Listener` for optional side-effects
+7. `Resource` for the response
+8. Tests: feature test on the endpoint + unit test on the Action (with Services mocked via Contract)

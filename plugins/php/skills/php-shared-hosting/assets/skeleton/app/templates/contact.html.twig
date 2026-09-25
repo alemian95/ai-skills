@@ -1,0 +1,24 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Contact{% endblock %}
+
+{% block content %}
+    <h1>Contact</h1>
+
+    <form method="post" action="{{ path('/contatti') }}" novalidate>
+        {{ csrf_field() }}
+        <label>Name
+            <input name="name" value="{{ old.name }}" maxlength="100" required>
+        </label>
+        {% if errors.name is defined %}<span class="error">{{ errors.name }}</span>{% endif %}
+        <label>Email
+            <input type="email" name="email" value="{{ old.email }}" required>
+        </label>
+        {% if errors.email is defined %}<span class="error">{{ errors.email }}</span>{% endif %}
+        <label>Message
+            <textarea name="message" rows="5" maxlength="5000" required>{{ old.message }}</textarea>
+        </label>
+        {% if errors.message is defined %}<span class="error">{{ errors.message }}</span>{% endif %}
+        <button type="submit">Send</button>
+    </form>
+{% endblock %}

@@ -1,192 +1,195 @@
 ---
 name: clean-code
 description: >
-  Applica SOLID, DRY, YAGNI e SSOT nella scrittura di nuovo codice e nell'analisi
-  di codice esistente, in qualsiasi linguaggio o framework. Usa questa skill ogni
-  volta che l'utente chiede di implementare una funzionalità, una classe, un modulo,
-  un servizio o un componente non banale — anche se non nomina esplicitamente i
-  principi di progettazione. Usala anche per review, refactoring, audit
-  architetturali, pareri sulla manutenibilità o sulla qualità del codice, e quando
-  l'utente segnala odori di codice: classi che fanno troppe cose, logica ripetuta,
-  costanti sparse, dipendenze da implementazioni concrete, condizionali annidati,
-  astrazioni premature. Frasi tipiche che devono attivarla: "implementa X",
-  "scrivi la classe che gestisce Y", "aggiungi la funzionalità Z", "rivedi questo
-  codice", "si può semplificare?", "questa funzione fa troppe cose", "c'è
-  duplicazione?", "è ben strutturato?", "come organizzeresti questo modulo?".
+  Applies SOLID, DRY, YAGNI and SSOT when writing new code and when analyzing
+  existing code, in any language or framework. Use this skill whenever the user
+  asks to implement a non-trivial feature, class, module, service or component —
+  even if they do not explicitly name the design principles. Also use it for
+  reviews, refactoring, architectural audits, opinions on maintainability or code
+  quality, and when the user points out code smells: classes that do too many
+  things, repeated logic, scattered constants, dependencies on concrete
+  implementations, nested conditionals, premature abstractions. Typical phrases
+  that must trigger it: "implementa X", "scrivi la classe che gestisce Y",
+  "aggiungi la funzionalità Z", "rivedi questo codice", "si può semplificare?",
+  "questa funzione fa troppe cose", "c'è duplicazione?", "è ben strutturato?",
+  "come organizzeresti questo modulo?".
 ---
 
 # Clean Code — SOLID, DRY, YAGNI, SSOT
 
-Questa skill governa due attività distinte: **scrivere codice nuovo** e
-**analizzare codice esistente**. I principi sono gli stessi, il momento in cui si
-applicano e il modo di coinvolgere l'utente no.
+This skill governs two distinct activities: **writing new code** and
+**analyzing existing code**. The principles are the same; the moment at which
+they apply and the way the user is involved are not.
 
-Determina prima di tutto in quale delle due modalità ti trovi, poi segui il
-percorso corrispondente. Se il compito è misto (implementare una funzionalità
-dentro codice già scritto), applica entrambi: la modalità implementativa per il
-nuovo codice, quella analitica per ciò che tocchi.
+First of all, determine which of the two modes you are in, then follow the
+corresponding path. If the task is mixed (implementing a feature inside code
+that already exists), apply both: the implementation mode for the new code, the
+analysis mode for whatever you touch.
 
-Per il dettaglio completo dei principi leggi `references/principi.md`. Il
-riepilogo qui sotto basta per l'uso corrente; consulta il riferimento quando devi
-motivare una violazione all'utente o quando la classificazione è dubbia.
+For the full detail of the principles, read `references/principles.md`. The
+summary below is enough for everyday use; consult the reference when you need
+to justify a violation to the user or when the classification is uncertain.
 
 ---
 
-## I quattro principi in forma operativa
+## The four principles in operational form
 
 ### SOLID
 
-| | Domanda da porsi | Sintomo di violazione |
+| | Question to ask | Symptom of violation |
 |---|---|---|
-| **S** Single Responsibility | Quante ragioni distinte ha questa unità per cambiare? | Il nome contiene "e"/"Manager"/"Utils"; la classe importa da domini scorrelati |
-| **O** Open/Closed | Per aggiungere un caso devo modificare codice esistente? | Catene di `if`/`switch` sul tipo che crescono a ogni requisito |
-| **L** Liskov Substitution | Il sottotipo rispetta il contratto del tipo base? | Metodi ereditati che lanciano "non supportato"; precondizioni irrigidite |
-| **I** Interface Segregation | Il client usa tutti i metodi che l'interfaccia gli impone? | Implementazioni piene di metodi vuoti o stub |
-| **D** Dependency Inversion | Questa unità nomina una classe concreta che potrebbe cambiare? | Istanziazione diretta di dipendenze dentro la logica di business |
+| **S** Single Responsibility | How many distinct reasons does this unit have to change? | The name contains "and"/"Manager"/"Utils"; the class imports from unrelated domains |
+| **O** Open/Closed | To add a case, do I have to modify existing code? | Chains of `if`/`switch` on the type that grow with every requirement |
+| **L** Liskov Substitution | Does the subtype honor the base type's contract? | Inherited methods that throw "not supported"; strengthened preconditions |
+| **I** Interface Segregation | Does the client use all the methods the interface imposes on it? | Implementations full of empty methods or stubs |
+| **D** Dependency Inversion | Does this unit name a concrete class that might change? | Direct instantiation of dependencies inside business logic |
 
 ### DRY
 
-Ogni logica ha una sola rappresentazione autorevole. Attenzione alla duplicazione
-*accidentale*: codice simile con scopi diversi non va unificato, perché
-l'unificazione crea accoppiamento tra requisiti indipendenti che poi divergono.
+Every piece of logic has a single authoritative representation. Watch out for
+*accidental* duplication: similar code with different purposes must not be
+unified, because unification creates coupling between independent requirements
+that later diverge.
 
 ### YAGNI
 
-Implementa solo il requisito corrente. Le astrazioni premature sono debito
-tecnico: introduci un'astrazione quando il pattern si è ripetuto almeno due volte,
-non quando immagini che si ripeterà.
+Implement only the current requirement. Premature abstractions are technical
+debt: introduce an abstraction when the pattern has repeated at least twice,
+not when you imagine it will repeat.
 
 ### SSOT
 
-Ogni regola di dominio, dato condiviso e costante ha una sola origine autorevole.
-Gli altri punti la richiamano, non la ridefiniscono.
+Every domain rule, shared piece of data and constant has a single authoritative
+origin. Other places reference it; they do not redefine it.
 
-### Distinguere DRY da SSOT
+### Telling DRY apart from SSOT
 
-Si sovrappongono in apparenza ma richiedono interventi diversi. Usa questo test:
+They appear to overlap but call for different interventions. Use this test:
 
-- **Se cambio questa regola, quanti punti devo toccare?** → problema DRY, si
-  risolve estraendo la logica.
-- **Se questi due punti divergessero, il sistema sarebbe incoerente?** → problema
-  SSOT, si risolve individuando o creando la fonte autorevole.
+- **If I change this rule, how many places do I have to touch?** → DRY problem,
+  solved by extracting the logic.
+- **If these two places diverged, would the system be inconsistent?** → SSOT
+  problem, solved by identifying or creating the authoritative source.
 
-Una violazione può essere entrambe le cose. In quel caso classificala come SSOT:
-è la più grave, perché produce comportamenti incongruenti e non solo lavoro
-duplicato.
-
----
-
-## Scala di gravità
-
-Serve a decidere quando interrompere l'utente. Senza una scala, un metodo da
-rinominare e una regola di dominio duplicata in tre livelli finiscono nello stesso
-elenco, e l'utente smette di leggere i report.
-
-**Bloccante** — compromette la correttezza o rende il cambiamento rischioso:
-- SSOT infranta: la stessa regola o lo stesso dato definiti in punti che possono divergere
-- SRP grave: un'unità che mescola responsabilità di livelli architetturali diversi
-- Logica di dominio duplicata in più moduli
-- Violazione Liskov che può produrre errori a runtime
-
-**Rilevante** — non rompe nulla oggi, ma il costo di manutenzione cresce:
-- Dipendenze da implementazioni concrete dove servirebbe un'astrazione
-- Interfacce monolitiche che costringono a implementazioni vuote
-- Catene condizionali che crescono a ogni nuovo caso
-- Astrazioni premature introdotte senza che il pattern si sia ripetuto
-
-**Cosmetica** — attrito minore:
-- Naming impreciso, micro-duplicazioni locali, costanti inline usate una volta sola
+A violation can be both. In that case classify it as SSOT: it is the more
+serious one, because it produces inconsistent behavior and not just duplicated
+work.
 
 ---
 
-## Modalità A — Scrittura di nuovo codice
+## Severity scale
 
-I principi si applicano **prima** di produrre codice, non in un secondo
-passaggio. Un refactoring evitato costa meno di un refactoring fatto bene.
+It is used to decide when to interrupt the user. Without a scale, a method to
+rename and a domain rule duplicated across three layers end up in the same
+list, and the user stops reading the reports.
 
-1. **Prima di scrivere**, individua le regole di dominio e i dati condivisi che la
-   funzionalità introduce o consuma. Per ognuno, cerca la fonte autorevole
-   esistente nel progetto. Se non esiste, decidi dove crearla in coerenza con
-   l'architettura presente — non scrivere la logica inline nel punto di utilizzo.
-2. **Applica YAGNI al requisito, non alla qualità.** Non aggiungere parametri,
-   livelli o punti di estensione non richiesti. Questo non è un permesso per
-   scrivere codice accoppiato: significa che l'astrazione deve essere
-   proporzionata a ciò che serve adesso.
-3. **Se il requisito spinge verso una violazione**, fermati prima di scrivere.
-   Non è il caso di produrre codice che sai essere sbagliato per poi proporne il
-   refactoring. Esponi il conflitto e proponi l'alternativa:
+**Blocking** — compromises correctness or makes change risky:
+- SSOT broken: the same rule or the same data defined in places that can diverge
+- Severe SRP violation: a unit that mixes responsibilities from different architectural layers
+- Domain logic duplicated across multiple modules
+- Liskov violation that can produce runtime errors
 
-   > Il requisito così com'è mi porterebbe a duplicare la regola di calcolo che
-   > è già definita in `X`. Posso: (a) richiamare la fonte esistente adattando
-   > l'interfaccia, (b) estrarre la regola in un punto condiviso, (c) procedere
-   > come richiesto accettando la duplicazione. Quale preferisci?
+**Significant** — breaks nothing today, but maintenance cost grows:
+- Dependencies on concrete implementations where an abstraction is needed
+- Monolithic interfaces that force empty implementations
+- Conditional chains that grow with every new case
+- Premature abstractions introduced before the pattern has repeated
 
-4. **A fine implementazione**, dichiara in due righe le scelte di progettazione
-   non ovvie: dove hai messo la fonte autorevole, quali astrazioni hai
-   deliberatamente evitato e perché.
+**Cosmetic** — minor friction:
+- Imprecise naming, local micro-duplications, inline constants used only once
 
 ---
 
-## Modalità B — Analisi di codice esistente
+## Mode A — Writing new code
 
-### Protocollo di interruzione
+The principles apply **before** producing code, not in a second pass. A
+refactoring avoided costs less than a refactoring done well.
 
-La soglia esiste per non trasformare ogni sessione in una consulenza
-architetturale non richiesta.
+1. **Before writing**, identify the domain rules and shared data that the
+   feature introduces or consumes. For each one, look for the existing
+   authoritative source in the project. If it does not exist, decide where to
+   create it consistently with the current architecture — do not write the
+   logic inline at the point of use.
+2. **Apply YAGNI to the requirement, not to quality.** Do not add parameters,
+   layers or extension points that were not requested. This is not permission
+   to write coupled code: it means the abstraction must be proportionate to
+   what is needed now.
+3. **If the requirement pushes toward a violation**, stop before writing. Do
+   not produce code you know is wrong only to then propose refactoring it.
+   Expose the conflict and propose the alternative:
 
-- **Violazione bloccante** → fermati subito e chiedi all'utente come procedere,
-  con le tre opzioni descritte sotto.
-- **Violazioni rilevanti e cosmetiche** → accumulale e presentale in un unico
-  riepilogo a fine attività, su cui l'utente decide in blocco.
+   > The requirement as it stands would lead me to duplicate the calculation
+   > rule that is already defined in `X`. I can: (a) reference the existing
+   > source by adapting the interface, (b) extract the rule into a shared
+   > place, (c) proceed as requested, accepting the duplication. Which do you
+   > prefer?
 
-### Le tre opzioni
+4. **At the end of the implementation**, state in two lines the non-obvious
+   design choices: where you put the authoritative source, which abstractions
+   you deliberately avoided and why.
 
-Alla rilevazione di una violazione bloccante, presenta il problema e chiedi:
+---
 
-1. **Intervenire ora** — procedi con il refactoring nella sessione corrente.
-2. **Rimandare** — registra il debito tecnico e prosegui con l'attività
-   originale. Vedi `references/protocollo-bozze.md` per il formato e la
-   destinazione della bozza.
-3. **Ignorare** — l'utente valuta che non sia un problema nel suo contesto.
-   Accetta la decisione senza riproporla nella stessa sessione.
+## Mode B — Analyzing existing code
 
-Non decidere al posto dell'utente e non iniziare il refactoring mentre poni la
-domanda. Un refactoring non richiesto in mezzo a un'altra attività è più dannoso
-della violazione che corregge.
+### Interruption protocol
 
-### Formato del report
+The threshold exists so that every session does not turn into unrequested
+architectural consulting.
 
-Per ogni violazione usa questa struttura:
+- **Blocking violation** → stop immediately and ask the user how to proceed,
+  with the three options described below.
+- **Significant and cosmetic violations** → collect them and present them in a
+  single summary at the end of the task, on which the user decides as a whole.
+
+### The three options
+
+When you detect a blocking violation, present the problem and ask:
+
+1. **Act now** — proceed with the refactoring in the current session.
+2. **Defer** — record the technical debt and continue with the original task.
+   See `references/draft-protocol.md` for the format and destination of the
+   draft.
+3. **Ignore** — the user judges that it is not a problem in their context.
+   Accept the decision without raising it again in the same session.
+
+Do not decide on the user's behalf and do not start the refactoring while you
+are asking the question. An unrequested refactoring in the middle of another
+task is more harmful than the violation it fixes.
+
+### Report format
+
+For each violation use this structure:
 
 ```markdown
-### [Gravità] Principio violato — posizione
-**Problema:** cosa non va, in una o due frasi.
-**Impatto:** cosa costa in manutenzione, evoluzione o correttezza.
-**Refactoring proposto:** l'intervento concreto, con il codice quando aiuta.
-**Trade-off:** cosa si perde o si rischia. Ometti la voce se non ce ne sono.
+### [Severity] Violated principle — location
+**Problem:** what is wrong, in one or two sentences.
+**Impact:** what it costs in maintenance, evolution or correctness.
+**Proposed refactoring:** the concrete intervention, with code when it helps.
+**Trade-offs:** what is lost or risked. Omit this item if there are none.
 ```
 
-Regole sul contenuto:
+Rules on content:
 
-- Indica la posizione precisa: file, classe, metodo, riga se disponibile.
-- Il refactoring proposto deve **ridurre** la complessità complessiva. Se
-  l'intervento aggiunge livelli, interfacce o indirezioni, giustificalo
-  esplicitamente o non proporlo.
-- Dichiara sempre i trade-off reali: rottura di API pubbliche, impatto sui test
-  esistenti, aumento della complessità strutturale, costo di migrazione dei dati.
-- Non segnalare violazioni ipotetiche basate su requisiti futuri non dichiarati.
-  Sarebbe una violazione di YAGNI travestita da review.
+- Give the precise location: file, class, method, line if available.
+- The proposed refactoring must **reduce** overall complexity. If the
+  intervention adds layers, interfaces or indirection, justify it explicitly or
+  do not propose it.
+- Always state the real trade-offs: breaking public APIs, impact on existing
+  tests, increased structural complexity, data migration cost.
+- Do not report hypothetical violations based on undeclared future
+  requirements. That would be a YAGNI violation disguised as a review.
 
 ---
 
-## Cosa non fare
+## What not to do
 
-- **Non applicare i principi come regole cieche.** Sono euristiche di
-  manutenibilità. In codice usa e getta, in prototipi o in script di migrazione
-  una tantum, l'aderenza rigida è essa stessa over-engineering.
-- **Non unificare duplicazioni accidentali.** Due frammenti simili che servono
-  scopi diversi devono restare separati.
-- **Non proporre refactoring a catena.** Correggi la violazione rilevata, non
-  l'architettura circostante, a meno che l'utente non lo chieda.
-- **Non riportare le violazioni cosmetiche come se fossero bloccanti.** Erode la
-  credibilità del report e fa ignorare anche le segnalazioni che contano.
+- **Do not apply the principles as blind rules.** They are maintainability
+  heuristics. In throwaway code, prototypes or one-off migration scripts, rigid
+  adherence is itself over-engineering.
+- **Do not unify accidental duplication.** Two similar fragments that serve
+  different purposes must stay separate.
+- **Do not propose chain refactorings.** Fix the detected violation, not the
+  surrounding architecture, unless the user asks for it.
+- **Do not report cosmetic violations as if they were blocking.** It erodes the
+  report's credibility and causes even the findings that matter to be ignored.

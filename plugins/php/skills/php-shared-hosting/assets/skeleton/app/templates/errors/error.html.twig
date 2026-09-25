@@ -1,0 +1,16 @@
+{% extends 'layout.html.twig' %}
+
+{% set titles = {403: 'Access denied', 404: 'Page not found', 405: 'Method not allowed', 500: 'Server error'} %}
+
+{% block title %}{{ titles[status] ?? 'Error' }}{% endblock %}
+
+{% block content %}
+    <h1>{{ titles[status] ?? 'Error' }}</h1>
+    <p>Code {{ status }}. <a href="{{ path('/') }}">Back to home</a></p>
+    {% if details %}
+        <h2>{{ details.class }}</h2>
+        <p>{{ details.message }}</p>
+        <p><code>{{ details.where }}</code></p>
+        <pre>{{ details.trace }}</pre>
+    {% endif %}
+{% endblock %}

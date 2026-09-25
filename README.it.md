@@ -20,16 +20,16 @@ Aggiornamento: `/plugin marketplace update ai-skills`.
 | Plugin | Contenuto |
 |---|---|
 | `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (ADR in formato Nygard) |
-| `php` | skill `php-moderno` (PHP 8.4+) · skill `php-hosting-condiviso` (hosting senza SSH, deploy FTP) |
+| `php` | skill `modern-php` (PHP 8.4+) · skill `php-shared-hosting` (hosting senza SSH, deploy FTP) |
 | `laravel` | skill `laravel-action-vs-service` · comando `/laravel:migrate-ziggy-to-wayfinder` |
 
 ## Snippet per CLAUDE.md
 
 `claude-md/` contiene regole da copiare a mano in `~/.claude/CLAUDE.md` o nel `CLAUDE.md` di progetto (un plugin non le può installare):
 
-- `principi-sviluppo.md`: principi di sviluppo globali
-- `regole-sicurezza.md`: regole sul flusso Git
-- `laravel-architettura.md`: architettura di un progetto Laravel + React, da usare insieme a [Laravel Boost](https://github.com/laravel/boost). Non va incollato nel `CLAUDE.md`, perché Boost lo rigenera: copialo in `.ai/guidelines/architettura.md` del progetto e lancia `php artisan boost:update` (o `boost:install`). Boost lo unisce alle sue guideline.
+- `development-principles.md`: principi di sviluppo globali
+- `git-safety-rules.md`: regole sul flusso Git
+- `laravel-architecture.md`: architettura di un progetto Laravel + React, da usare insieme a [Laravel Boost](https://github.com/laravel/boost). Non va incollato nel `CLAUDE.md`, perché Boost lo rigenera: copialo in `.ai/guidelines/architecture.md` del progetto e lancia `php artisan boost:update` (o `boost:install`). Boost lo unisce alle sue guideline.
 
 ## Struttura
 

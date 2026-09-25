@@ -1,0 +1,4 @@
+# Runtime data (database, logs, sessions, cache): only the folders are versioned.
+*
+!*/
+!.gitignore

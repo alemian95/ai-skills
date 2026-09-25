@@ -1,0 +1,41 @@
+# Blocks added by the hosting panel (e.g. "# php -- BEGIN cPanel-generated handler")
+# go here, at the top: keep them when you replace this file.
+# Site in a subfolder: update the lines marked [SUBFOLDER].
+# No php_value/php_flag here (500 error with PHP-FPM): PHP settings go in .user.ini.
+
+Options -Indexes
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
+
+# Hidden files: .htaccess, .user.ini, .env, .gitignore
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# app/: second line of defense after app/.htaccess (404, so the folder is not confirmed).
+# Hidden path segments (/.git/config) except /.well-known/.
+<IfModule mod_alias.c>
+    RedirectMatch 404 ^/app(/|$)
+    # [SUBFOLDER] RedirectMatch 404 ^/sito/app(/|$)
+    RedirectMatch 404 /\.(?!well-known/)
+</IfModule>
+
+# Front controller: whatever is not an existing file goes to index.php.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^app(/|$) - [R=404,L]
+    RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
+    RewriteRule ^assets/ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+<IfModule !mod_rewrite.c>
+    FallbackResource /index.php
+    # [SUBFOLDER] FallbackResource /sito/index.php
+</IfModule>

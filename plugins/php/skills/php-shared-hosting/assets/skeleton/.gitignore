@@ -1,0 +1,6 @@
+/build/
+/app/vendor/
+/app/config/settings.local.php
+/app/.phpunit.cache/
+/app/.php-cs-fixer.cache
+.DS_Store

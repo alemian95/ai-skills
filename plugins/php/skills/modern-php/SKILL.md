@@ -90,7 +90,7 @@ When you find them in the code you touch, replace them (or flag them in review) 
 | mutable `DateTime` passed around | `DateTimeImmutable` |
 | `json_decode` + `json_last_error()` | `JSON_THROW_ON_ERROR` |
 | `mb_internal_encoding('UTF-8')` in every script | unnecessary: `default_charset` has been UTF-8 since 5.6 |
-| `FILTER_SANITIZE_STRING` | removed: validate the format, escape on output |
+| `FILTER_SANITIZE_STRING` | deprecated since 8.1: validate the format, escape on output |
 | `xdebug.remote_*`, port 9000 | Xdebug 3: `xdebug.mode`, `client_host`, port 9003 |
 | `@test`, `@dataProvider` docblocks in PHPUnit | `#[Test]`, `#[DataProvider]` attributes (PHPUnit ≥ 12) |
 | Local PHP Security Checker | `composer audit` |

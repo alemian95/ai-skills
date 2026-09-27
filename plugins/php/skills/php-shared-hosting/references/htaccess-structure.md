@@ -33,7 +33,7 @@ With the front controller all requests go through `index.php`, so the document r
     ├── .user.ini
     └── assets/
 ```
-With this structure set `publicDir` in `settings.local.php` to the path of `public_html`, and move the `RedirectMatch 404 ^/app` rule because it is no longer needed (it is harmless if it stays).
+With this structure set `publicDir` in `settings.local.php` to the path of `public_html`, and remove the `RedirectMatch 404 ^/app` rule because it is no longer needed (it is harmless if it stays).
 
 **B — everything in the document root** (when you cannot go outside `public_html`, or do not know whether you can):
 ```

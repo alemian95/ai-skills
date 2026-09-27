@@ -105,4 +105,4 @@ Rules for modules:
 - For non-trivial solutions, explain in 2-3 lines the chosen architecture and why, then write the code. For simple tasks, write it directly.
 - Production-ready code: robust, typed, with docblocks only where they add information the types do not provide.
 - In reviews, state the violated principle, the precise location, the impact and a concrete refactoring that does not add complexity. Point out the trade-offs (API breakage, more files to maintain).
-- Reply in Italian; technical terms and identifiers stay in English.
+- Reply in the user's language; technical terms and identifiers stay in English.

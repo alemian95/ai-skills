@@ -1,6 +1,6 @@
 ---
 name: laravel-action-vs-service
-description: Use when designing or refactoring backend business logic in a Laravel project and deciding where to place it — between Controller, Action, Service, Event/Listener, or Job. Triggers include "dove metto questa logica", a new POST/PUT/DELETE endpoint, a fat Controller method, orchestration with multiple steps, side-effects (email/analytics/external API), a Controller calling Eloquent or an external SDK directly, or duplicated business logic across endpoints. Use it even when the user only mentions "action" or "service" in passing without asking an explicit design question.
+description: Use when designing or refactoring backend business logic in a Laravel project and deciding where to place it — between Controller, Action, Service, Event/Listener, or Job. Triggers include "where should this logic go", a new POST/PUT/DELETE endpoint, a fat Controller method, orchestration with multiple steps, side-effects (email/analytics/external API), a Controller calling Eloquent or an external SDK directly, or duplicated business logic across endpoints. Use it even when the user only mentions "action" or "service" in passing without asking an explicit design question.
 ---
 
 # Laravel: Action vs Service

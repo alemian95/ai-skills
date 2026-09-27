@@ -1,10 +1,6 @@
 # ai-skills
 
-**English** · [Italiano](README.it.md)
-
 Plugin marketplace for [Claude Code](https://code.claude.com): skills, commands and agents.
-
-> The skill and command content is written in Italian. Claude follows it regardless of the language you work in.
 
 ## Installation
 

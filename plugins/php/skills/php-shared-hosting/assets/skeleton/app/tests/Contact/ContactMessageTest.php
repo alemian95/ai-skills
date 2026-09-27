@@ -30,8 +30,8 @@ final class ContactMessageTest extends TestCase
     {
         yield 'body not an array' => ['text', ['name', 'email', 'message']];
         yield 'invalid email' => [['name' => 'Anna', 'email' => 'anna@', 'message' => 'ok'], ['email']];
-        yield 'name too long' => [['name' => str_repeat('é', 101), 'email' => 'a@b.it', 'message' => 'ok'], ['name']];
-        yield 'wrong type' => [['name' => ['x'], 'email' => 'a@b.it', 'message' => 'ok'], ['name']];
+        yield 'name too long' => [['name' => str_repeat('é', 101), 'email' => 'a@example.com', 'message' => 'ok'], ['name']];
+        yield 'wrong type' => [['name' => ['x'], 'email' => 'a@example.com', 'message' => 'ok'], ['name']];
     }
 
     /**

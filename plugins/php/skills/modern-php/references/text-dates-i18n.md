@@ -42,7 +42,7 @@ Locale-sensitive formatting and comparison (based on ICU):
 - `NumberFormatter` for numbers, currencies and percentages (`new NumberFormatter('it_IT', NumberFormatter::CURRENCY)`).
 - `IntlDateFormatter` for localized dates (month and day names, regional formats).
 - `Collator` to sort strings according to the language's rules (`sort` sorts by bytes).
-- `MessageFormatter` for messages with plurals and arguments (ICU syntax: `{count, plural, one {# elemento} other {# elementi}}`).
+- `MessageFormatter` for messages with plurals and arguments (ICU syntax: `{count, plural, one {# item} other {# items}}`).
 - `Transliterator` for slugs and transliterations.
 
 ## 4. Dates and time zones

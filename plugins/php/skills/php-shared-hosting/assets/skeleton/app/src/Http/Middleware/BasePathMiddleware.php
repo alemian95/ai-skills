@@ -10,7 +10,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * Makes the application independent of the installation folder (e.g. example.com/sito/):
+ * Makes the application independent of the installation folder (e.g. example.com/site/):
  * strips the prefix from the path before routing and exposes it to generate links and asset URLs.
  */
 final readonly class BasePathMiddleware implements MiddlewareInterface

@@ -22,7 +22,7 @@ return new Settings(...[
     'varDir' => dirname(__DIR__) . '/var',  // writable data: SQLite database, logs, sessions, cache
     'debug' => false,
     'https' => true,                        // Secure cookie and HSTS; false only in development over http://
-    'timezone' => 'Europe/Rome',
+    'timezone' => 'UTC',
     'logLevel' => Level::Warning,
     'sessionName' => 'app_session',
     'database' => [

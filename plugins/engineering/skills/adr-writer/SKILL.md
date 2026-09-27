@@ -1,6 +1,6 @@
 ---
 name: adr-writer
-description: Turn decisions made during an implementation or brainstorming session into Architecture Decision Records (Nygard format), reconstructing context and rationale from the conversation, from git history, and from the existing docs. Use this skill whenever the user asks to document a decision, write an ADR, record why something was chosen, capture the outcome of a design discussion, or says things like "documentiamo questa scelta", "scrivi un ADR", "teniamo traccia di questa decisione", "perché abbiamo fatto così?" — and also proactively offer it at the end of any session where a non-trivial architectural choice was settled, even if the user never says the word "ADR".
+description: Turn decisions made during an implementation or brainstorming session into Architecture Decision Records (Nygard format), reconstructing context and rationale from the conversation, from git history, and from the existing docs. Use this skill whenever the user asks to document a decision, write an ADR, record why something was chosen, capture the outcome of a design discussion, or says things like "let's document this choice", "write an ADR", "let's keep track of this decision", "why did we do it this way?" — and also proactively offer it at the end of any session where a non-trivial architectural choice was settled, even if the user never says the word "ADR".
 ---
 
 # ADR Writer
@@ -78,7 +78,7 @@ Date: YYYY-MM-DD
 
 ## Decision
 
-<The choice. Active voice, "Adottiamo..." / "We will...">
+<The choice. Active voice, "We will...">
 
 ## Consequences
 

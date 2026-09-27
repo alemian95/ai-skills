@@ -44,7 +44,7 @@ final class ApplicationTest extends TestCase
         self::assertSame(404, $notFound->getStatusCode());
         self::assertStringContainsString('Page not found', (string) $notFound->getBody());
 
-        $notAllowed = $this->app->request('DELETE', '/contatti');
+        $notAllowed = $this->app->request('DELETE', '/contact');
         self::assertSame(405, $notAllowed->getStatusCode());
         self::assertSame('GET, POST', $notAllowed->getHeaderLine('Allow'));
     }
@@ -52,7 +52,7 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function post_without_csrf_token_is_rejected(): void
     {
-        $response = $this->app->request('POST', '/contatti', ['name' => 'Anna', 'email' => 'anna@example.com', 'message' => 'Hello']);
+        $response = $this->app->request('POST', '/contact', ['name' => 'Anna', 'email' => 'anna@example.com', 'message' => 'Hello']);
 
         self::assertSame(403, $response->getStatusCode());
         self::assertSame(0, $this->storedMessages());
@@ -63,17 +63,17 @@ final class ApplicationTest extends TestCase
     {
         $token = $this->csrfToken();
 
-        $response = $this->app->request('POST', '/contatti', [
+        $response = $this->app->request('POST', '/contact', [
             '_csrf' => $token, 'name' => 'Anna', 'email' => 'anna@example.com', 'message' => 'Hello',
         ]);
         self::assertSame(303, $response->getStatusCode());
-        self::assertSame('/contatti', $response->getHeaderLine('Location'));
+        self::assertSame('/contact', $response->getHeaderLine('Location'));
         self::assertSame(1, $this->storedMessages());
 
-        self::assertStringContainsString('Message sent', (string) $this->app->request('GET', '/contatti')->getBody());
-        self::assertStringNotContainsString('Message sent', (string) $this->app->request('GET', '/contatti')->getBody());
+        self::assertStringContainsString('Message sent', (string) $this->app->request('GET', '/contact')->getBody());
+        self::assertStringNotContainsString('Message sent', (string) $this->app->request('GET', '/contact')->getBody());
 
-        $second = $this->app->request('POST', '/contatti', [
+        $second = $this->app->request('POST', '/contact', [
             '_csrf' => $token, 'name' => 'Anna', 'email' => 'anna@example.com', 'message' => 'Again',
         ]);
         self::assertSame(303, $second->getStatusCode(), 'the same token is valid for the whole session');
@@ -84,7 +84,7 @@ final class ApplicationTest extends TestCase
     {
         $token = $this->csrfToken();
 
-        $response = $this->app->request('POST', '/contatti', [
+        $response = $this->app->request('POST', '/contact', [
             '_csrf' => $token, 'name' => '"><script>alert(1)</script>', 'email' => 'not-valid', 'message' => 'Hello',
         ]);
         $html = (string) $response->getBody();
@@ -99,14 +99,14 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function the_application_works_from_a_subdirectory(): void
     {
-        $app = new TestApplication(scriptName: '/sito/index.php');
+        $app = new TestApplication(scriptName: '/site/index.php');
 
         try {
-            $html = (string) $app->request('GET', '/sito/contatti')->getBody();
+            $html = (string) $app->request('GET', '/site/contact')->getBody();
 
-            self::assertStringContainsString('action="/sito/contatti"', $html);
-            self::assertMatchesRegularExpression('#href="/sito/assets/css/app\.css\?v=\d+"#', $html);
-            self::assertSame(200, $app->request('GET', '/sito/index.php/contatti')->getStatusCode(), 'fallback with PATH_INFO');
+            self::assertStringContainsString('action="/site/contact"', $html);
+            self::assertMatchesRegularExpression('#href="/site/assets/css/app\.css\?v=\d+"#', $html);
+            self::assertSame(200, $app->request('GET', '/site/index.php/contact')->getStatusCode(), 'fallback with PATH_INFO');
         } finally {
             $app->removeFiles();
         }
@@ -114,7 +114,7 @@ final class ApplicationTest extends TestCase
 
     private function csrfToken(): string
     {
-        $html = (string) $this->app->request('GET', '/contatti')->getBody();
+        $html = (string) $this->app->request('GET', '/contact')->getBody();
         if (preg_match('/name="_csrf" value="([0-9a-f]{64})"/', $html, $m) !== 1) {
             self::fail('CSRF field not found in the form');
         }

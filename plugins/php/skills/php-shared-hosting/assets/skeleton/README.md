@@ -53,4 +53,4 @@ In `composer.json` the `config.platform.php` entry must match the server's PHP v
 
 ## Subfolder
 
-If the site lives in `example.com/sito/`, links and assets adapt on their own (`BasePathMiddleware`). In `.htaccess` update the lines marked `[SUBFOLDER]`, i.e. `RedirectMatch 404 ^/sito/app(/|$)` and `FallbackResource /sito/index.php`.
+If the site lives in `example.com/site/`, links and assets adapt on their own (`BasePathMiddleware`). In `.htaccess` update the lines marked `[SUBFOLDER]`, i.e. `RedirectMatch 404 ^/site/app(/|$)` and `FallbackResource /site/index.php`.

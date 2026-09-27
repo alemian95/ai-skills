@@ -44,7 +44,7 @@ final readonly class ContactHandler implements RequestHandlerInterface
         }
         Flash::add($session, 'Message sent, thank you!');
 
-        return $this->view->redirect($request, '/contatti');
+        return $this->view->redirect($request, '/contact');
     }
 
     /**

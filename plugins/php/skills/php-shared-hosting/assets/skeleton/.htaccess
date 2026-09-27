@@ -22,7 +22,7 @@ AddDefaultCharset UTF-8
 # Hidden path segments (/.git/config) except /.well-known/.
 <IfModule mod_alias.c>
     RedirectMatch 404 ^/app(/|$)
-    # [SUBFOLDER] RedirectMatch 404 ^/sito/app(/|$)
+    # [SUBFOLDER] RedirectMatch 404 ^/site/app(/|$)
     RedirectMatch 404 /\.(?!well-known/)
 </IfModule>
 
@@ -37,5 +37,5 @@ AddDefaultCharset UTF-8
 </IfModule>
 <IfModule !mod_rewrite.c>
     FallbackResource /index.php
-    # [SUBFOLDER] FallbackResource /sito/index.php
+    # [SUBFOLDER] FallbackResource /site/index.php
 </IfModule>

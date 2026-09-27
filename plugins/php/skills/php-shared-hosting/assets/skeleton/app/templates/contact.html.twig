@@ -5,7 +5,7 @@
 {% block content %}
     <h1>Contact</h1>
 
-    <form method="post" action="{{ path('/contatti') }}" novalidate>
+    <form method="post" action="{{ path('/contact') }}" novalidate>
         {{ csrf_field() }}
         <label>Name
             <input name="name" value="{{ old.name }}" maxlength="100" required>

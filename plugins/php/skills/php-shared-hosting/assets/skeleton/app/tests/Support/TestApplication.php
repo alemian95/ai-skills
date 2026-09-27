@@ -43,7 +43,7 @@ final class TestApplication
             varDir: $this->varDir,
             debug: false,
             https: false,
-            timezone: 'Europe/Rome',
+            timezone: 'UTC',
             logLevel: Level::Debug,
             sessionName: 'test',
             database: ['driver' => 'pdo_sqlite', 'path' => $this->varDir . '/test.sqlite'],

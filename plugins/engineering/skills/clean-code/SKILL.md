@@ -9,10 +9,10 @@ description: >
   quality, and when the user points out code smells: classes that do too many
   things, repeated logic, scattered constants, dependencies on concrete
   implementations, nested conditionals, premature abstractions. Typical phrases
-  that must trigger it: "implementa X", "scrivi la classe che gestisce Y",
-  "aggiungi la funzionalità Z", "rivedi questo codice", "si può semplificare?",
-  "questa funzione fa troppe cose", "c'è duplicazione?", "è ben strutturato?",
-  "come organizzeresti questo modulo?".
+  that must trigger it: "implement X", "write the class that handles Y",
+  "add feature Z", "review this code", "can this be simplified?",
+  "this function does too many things", "is there duplication?", "is this well
+  structured?", "how would you organize this module?".
 ---
 
 # Clean Code — SOLID, DRY, YAGNI, SSOT

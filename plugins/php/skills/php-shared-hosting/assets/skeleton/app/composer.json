@@ -1,5 +1,5 @@
 {
-    "name": "acme/sito",
+    "name": "acme/site",
     "description": "PHP 8.4 skeleton for shared hosting: PSR-7/11/15/17, Twig, Doctrine DBAL",
     "type": "project",
     "license": "proprietary",

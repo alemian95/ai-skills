@@ -8,5 +8,5 @@ use FastRoute\RouteCollector;
 
 return static function (RouteCollector $r): void {
     $r->get('/', HomeHandler::class);
-    $r->addRoute(['GET', 'POST'], '/contatti', ContactHandler::class);
+    $r->addRoute(['GET', 'POST'], '/contact', ContactHandler::class);
 };

@@ -19,7 +19,7 @@ The web server can serve only what is inside the document root. If the document 
 - `vendor/` reachable: it contains executable files not meant for the web. The best-known case is `phpunit/src/Util/PHP/eval-stdin.php` (CVE-2017-9841), still probed en masse by scanners;
 - forgotten files: `.env`, SQL dumps, `.git/`, backups.
 
-With the front controller all requests go through `index.php`, so the document root needs nothing but that file and the assets. Structure A below is the same model; B imitates it with whitelists and blocks, and for this reason must always be verified. On cPanel and Plesk the main domain's document root is often fixed, but that of **subdomains and addon domains can usually be chosen**: if the site can live on one of these, point it to a folder like `.../sito/public` and get the framework structure without compromises.
+With the front controller all requests go through `index.php`, so the document root needs nothing but that file and the assets. Structure A below is the same model; B imitates it with whitelists and blocks, and for this reason must always be verified. On cPanel and Plesk the main domain's document root is often fixed, but that of **subdomains and addon domains can usually be chosen**: if the site can live on one of these, point it to a folder like `.../site/public` and get the framework structure without compromises.
 
 ## 2. Two possible structures
 
@@ -144,19 +144,19 @@ In any case, the outcome is verified with `check-exposure.php`, not inferred fro
 
 ## 7. Site in a subfolder
 
-With the site at `example.com/sito/`:
+With the site at `example.com/site/`:
 - the application adapts by itself: `BasePathMiddleware` derives the prefix from `SCRIPT_NAME` and strips it before routing; `path()` and `asset()` add it to links;
-- in `.htaccess` update `RedirectMatch 404 ^/sito/app(/|$)` and `FallbackResource /sito/index.php`;
+- in `.htaccess` update `RedirectMatch 404 ^/site/app(/|$)` and `FallbackResource /site/index.php`;
 - `RewriteRule ^ index.php` works without changes, because in `.htaccess` files the relative substitution is resolved relative to the folder;
-- run `check-exposure.php https://example.com/sito`.
+- run `check-exposure.php https://example.com/site`.
 
 ## 8. Routing without mod_rewrite
 
 In order of preference:
 1. `mod_rewrite` (almost always present);
 2. `FallbackResource` (mod_dir, Apache ≥ 2.2.16): same result with a single line;
-3. URLs with PATH_INFO: `/index.php/contatti`. `BasePathMiddleware` already recognizes them; links must be generated with the `/index.php` prefix (configuration to be added only if really necessary);
-4. query string parameter (`/?r=/contatti`): last resort, worsens URLs and SEO.
+3. URLs with PATH_INFO: `/index.php/contact`. `BasePathMiddleware` already recognizes them; links must be generated with the `/index.php` prefix (configuration to be added only if really necessary);
+4. query string parameter (`/?r=/contact`): last resort, worsens URLs and SEO.
 
 ## 9. 500 errors after a change
 

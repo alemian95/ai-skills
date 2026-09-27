@@ -1,114 +1,114 @@
 ---
-description: Migra un progetto Laravel + Inertia + React da Ziggy a Wayfinder, fase per fase
+description: Migrate a Laravel + Inertia + React project from Ziggy to Wayfinder, phase by phase
 ---
 
-# Piano di Migrazione: Ziggy → Wayfinder
+# Migration Plan: Ziggy → Wayfinder
 ## Laravel + Inertia.js + React
 
-> **Documento per Claude Code** — Segui le fasi nell'ordine indicato. Ogni fase include comandi esatti, pattern da cercare e file da modificare. Le fasi sono idempotenti: puoi rieseguirle senza danni.
+> **Document for Claude Code** — Follow the phases in the order given. Each phase includes exact commands, patterns to search for, and files to modify. The phases are idempotent: you can re-run them without harm.
 
 ---
 
-## Differenze fondamentali da tenere a mente
+## Key differences to keep in mind
 
-| Aspetto | Ziggy | Wayfinder |
+| Aspect | Ziggy | Wayfinder |
 |---|---|---|
-| Meccanismo | Esporta le rotte in runtime via `@routes` nel DOM | Genera file TypeScript statici a build-time |
-| API principale | `route('nome.rotta', params)` → stringa URL | `import { method } from '@/actions/Controller'` → oggetto `{ url, method }` |
-| Parametri | Stringa o oggetto con chiavi arbitrarie | Argomenti tipizzati, generati dal controller |
-| Query string | `_query: { key: value }` | `{ query: { key: value } }` come opzione |
-| Route corrente | `route().current('nome.*')` | Non esiste — usare `usePage().url` o condividere il nome rotta dal backend |
-| Inertia `useForm` | `form.post(route('nome'))` | `form.submit(store())` — Wayfinder risolve URL e metodo automaticamente |
-| Inertia `router` | `router.visit(route('nome'))` | `router.visit(controller.method(params))` — oggetto passato direttamente |
-| Cartelle generate | nessuna | `resources/js/wayfinder/`, `resources/js/actions/`, `resources/js/routes/` |
-| `.gitignore` | n/a | **Sì** — le cartelle generate vanno in `.gitignore` |
+| Mechanism | Exports routes at runtime via `@routes` in the DOM | Generates static TypeScript files at build time |
+| Main API | `route('route.name', params)` → URL string | `import { method } from '@/actions/Controller'` → `{ url, method }` object |
+| Parameters | String or object with arbitrary keys | Typed arguments, generated from the controller |
+| Query string | `_query: { key: value }` | `{ query: { key: value } }` as an option |
+| Current route | `route().current('name.*')` | Does not exist — use `usePage().url` or share the route name from the backend |
+| Inertia `useForm` | `form.post(route('name'))` | `form.submit(store())` — Wayfinder resolves URL and method automatically |
+| Inertia `router` | `router.visit(route('name'))` | `router.visit(controller.method(params))` — object passed directly |
+| Generated folders | none | `resources/js/wayfinder/`, `resources/js/actions/`, `resources/js/routes/` |
+| `.gitignore` | n/a | **Yes** — the generated folders go in `.gitignore` |
 
-> ⚠️ **Wayfinder è ancora in beta** (v0.x). L'API può cambiare prima della v1.0. Per progetti esistenti, valuta la dimensione del codebase prima di procedere.
+> ⚠️ **Wayfinder is still in beta** (v0.x). The API may change before v1.0. For existing projects, assess the size of the codebase before proceeding.
 
-> 🔴 **Non saltare la Fase 8.** Rimuovere Ziggy dal codice non basta: se Laravel Boost non viene aggiornato con `boost:update --discover`, le guidelines in `.ai/` restano quelle di Ziggy e gli agent continueranno a generare `route('nome.rotta')`.
+> 🔴 **Do not skip Phase 8.** Removing Ziggy from the code is not enough: if Laravel Boost is not updated with `boost:update --discover`, the guidelines in `.ai/` remain the Ziggy ones and agents will keep generating `route('route.name')`.
 
 ---
 
-## Fase 0 — Analisi e inventario
+## Phase 0 — Analysis and inventory
 
-### 0.1 Verifica prerequisiti
+### 0.1 Check prerequisites
 
 ```bash
-sail artisan --version                                          # Richiede Laravel 10+ (consigliato 12+)
+sail artisan --version                                          # Requires Laravel 10+ (12+ recommended)
 cat composer.json | grep -E "laravel/framework|tightenco/ziggy"
 cat package.json | grep -E "ziggy-js|wayfinder"
 ```
 
-### 0.2 Inventario utilizzi Ziggy
+### 0.2 Inventory of Ziggy usages
 
 ```bash
-# Conta e localizza tutti i route() nel frontend
+# Count and locate every route() in the frontend
 grep -rn "route(" resources/js --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" \
   | grep -v "node_modules" \
   | tee /tmp/ziggy-occurrences.txt
 
-wc -l /tmp/ziggy-occurrences.txt   # quante occorrenze totali
+wc -l /tmp/ziggy-occurrences.txt   # total number of occurrences
 
-# File con più occorrenze (priorità migrazione)
+# Files with the most occurrences (migration priority)
 grep -rn "route(" resources/js --include="*.tsx" --include="*.ts" -l \
   | xargs -I{} sh -c 'echo "$(grep -c "route(" {}) {}"' \
   | sort -rn
 
-# Cerca route().current() — caso speciale, nessun equivalente diretto
+# Search for route().current() — special case, no direct equivalent
 grep -rn "route()\.current\|\.current(" resources/js --include="*.tsx" --include="*.ts"
 
-# Cerca _query (sintassi query string Ziggy)
+# Search for _query (Ziggy query string syntax)
 grep -rn "_query:" resources/js --include="*.tsx" --include="*.ts"
 
-# Cerca useForm con route()
+# Search for useForm with route()
 grep -rn "useForm\|\.post(\|\.put(\|\.patch(\|\.delete(" resources/js --include="*.tsx" --include="*.ts" \
   | grep "route("
 
-# Blade: @routes e route() lato PHP
+# Blade: @routes and route() on the PHP side
 grep -rn "@routes" resources/views --include="*.blade.php"
 grep -rn "ziggy\|Ziggy" app/ --include="*.php"
 ```
 
-### 0.3 Mappa rotte → controller
+### 0.3 Route → controller map
 
-Hai due modi per ottenere la mappa completa delle rotte:
+You have two ways to get the full route map:
 
-**Opzione A — Leggere direttamente `routes/web.php`** (e gli altri file in `routes/`):
+**Option A — Read `routes/web.php` directly** (and the other files in `routes/`):
 
 ```bash
 cat routes/web.php
-# Se esistono altri file di rotte:
+# If other route files exist:
 ls routes/
-cat routes/auth.php    # se presente
-cat routes/api.php     # se presente
+cat routes/auth.php    # if present
+cat routes/api.php     # if present
 ```
 
-**Opzione B — Comando Artisan** (vista tabellare più leggibile):
+**Option B — Artisan command** (more readable tabular view):
 
 ```bash
-# Vista completa con controller, metodo HTTP e nome rotta
+# Full view with controller, HTTP method and route name
 sail artisan route:list
 
-# Filtra per nome (es. solo rotte "posts")
+# Filter by name (e.g. only "posts" routes)
 sail artisan route:list --name=posts
 
-# Esporta in JSON e salva su file per riferimento durante la migrazione
+# Export as JSON and save to a file for reference during the migration
 sail artisan route:list --json > /tmp/routes-list.json
 ```
 
-Questa mappa è la **rosetta stone** della migrazione: per ogni `route('nome.rotta')` trovato nel frontend, cerca il nome rotta in `routes/web.php` o nell'output di `route:list` per risalire al controller e al metodo corrispondente.
+This map is the **Rosetta Stone** of the migration: for every `route('route.name')` found in the frontend, look up the route name in `routes/web.php` or in the `route:list` output to trace it back to the corresponding controller and method.
 
 ---
 
-## Fase 1 — Installazione Wayfinder
+## Phase 1 — Installing Wayfinder
 
-### 1.1 Pacchetto PHP
+### 1.1 PHP package
 
 ```bash
 sail composer require laravel/wayfinder
 ```
 
-### 1.2 Pacchetto Node
+### 1.2 Node package
 
 ```bash
 sail pnpm add @laravel/wayfinder
@@ -116,17 +116,17 @@ sail pnpm add @laravel/wayfinder
 
 ### 1.3 Vite plugin
 
-Wayfinder si integra con Vite tramite il plugin `@laravel/vite-plugin-wayfinder`. In `vite.config.ts`:
+Wayfinder integrates with Vite through the `@laravel/vite-plugin-wayfinder` plugin. In `vite.config.ts`:
 
 ```typescript
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
-import { wayfinder } from '@laravel/vite-plugin-wayfinder'; // ← aggiungi
+import { wayfinder } from '@laravel/vite-plugin-wayfinder'; // ← add
 
 export default defineConfig({
     plugins: [
-        wayfinder(),   // ← prima degli altri plugin
+        wayfinder(),   // ← before the other plugins
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
@@ -136,36 +136,36 @@ export default defineConfig({
 });
 ```
 
-> Il plugin si occupa di rigenerare i file TypeScript ogni volta che modifichi un controller o un file di rotte durante `sail pnpm dev`.
+> The plugin takes care of regenerating the TypeScript files every time you modify a controller or a route file during `sail pnpm dev`.
 
-### 1.4 Prima generazione
+### 1.4 First generation
 
 ```bash
 sail artisan wayfinder:generate
 ```
 
-Verifica le cartelle create:
+Check the created folders:
 
 ```bash
-ls resources/js/wayfinder/   # helper di base
-ls resources/js/actions/     # funzioni per ogni controller
-ls resources/js/routes/      # funzioni per rotte con nome
+ls resources/js/wayfinder/   # base helpers
+ls resources/js/actions/     # functions for each controller
+ls resources/js/routes/      # functions for named routes
 ```
 
-Opzioni utili del comando:
+Useful command options:
 
 ```bash
-# Percorso personalizzato (default: resources/js)
+# Custom path (default: resources/js)
 sail artisan wayfinder:generate --path=resources/js/wayfinder
 
-# Solo actions (senza rotte con nome)
+# Actions only (without named routes)
 sail artisan wayfinder:generate --skip-routes
 
-# Solo rotte con nome (senza actions)
+# Named routes only (without actions)
 sail artisan wayfinder:generate --skip-actions
 ```
 
-### 1.5 Aggiungi al `.gitignore`
+### 1.5 Add to `.gitignore`
 
 ```bash
 echo "resources/js/wayfinder" >> .gitignore
@@ -173,15 +173,15 @@ echo "resources/js/actions" >> .gitignore
 echo "resources/js/routes" >> .gitignore
 ```
 
-I file sono completamente rigenerati a ogni build, non vanno in versione.
+The files are fully regenerated on every build; they do not belong in version control.
 
 ---
 
-## Fase 2 — Configurazione TypeScript
+## Phase 2 — TypeScript configuration
 
-### 2.1 Verifica alias `@` in `tsconfig.json`
+### 2.1 Check the `@` alias in `tsconfig.json`
 
-Wayfinder usa i path `@/actions/...` e `@/routes/...`. Assicurati che l'alias `@` punti a `resources/js`:
+Wayfinder uses the paths `@/actions/...` and `@/routes/...`. Make sure the `@` alias points to `resources/js`:
 
 ```json
 {
@@ -194,9 +194,9 @@ Wayfinder usa i path `@/actions/...` e `@/routes/...`. Assicurati che l'alias `@
 }
 ```
 
-### 2.2 Script `package.json`
+### 2.2 `package.json` scripts
 
-Aggiungi uno script per rigenerare manualmente i tipi:
+Add a script to regenerate the types manually:
 
 ```json
 {
@@ -208,15 +208,15 @@ Aggiungi uno script per rigenerare manualmente i tipi:
 }
 ```
 
-Per eseguirli tramite Sail:
+To run them through Sail:
 
 ```bash
 sail pnpm dev
 sail pnpm build
-sail pnpm wayfinder    # rigenerazione manuale dei tipi
+sail pnpm wayfinder    # manual type regeneration
 ```
 
-> ⚠️ **Bug noto ([issue #55](https://github.com/laravel/wayfinder/issues/55))**: in alcuni ambienti il plugin Vite non genera tutti i file prima che il bundler li importi. Se `sail pnpm build` fallisce con `ENOENT: no such file or directory`, esegui prima la generazione manuale:
+> ⚠️ **Known bug ([issue #55](https://github.com/laravel/wayfinder/issues/55))**: in some environments the Vite plugin does not generate all the files before the bundler imports them. If `sail pnpm build` fails with `ENOENT: no such file or directory`, run the manual generation first:
 >
 > ```bash
 > sail artisan wayfinder:generate && sail pnpm build
@@ -224,13 +224,13 @@ sail pnpm wayfinder    # rigenerazione manuale dei tipi
 
 ---
 
-## Fase 3 — Capire l'API di Wayfinder
+## Phase 3 — Understanding the Wayfinder API
 
-Prima di toccare il codice, leggi come funziona Wayfinder.
+Before touching the code, read how Wayfinder works.
 
-### 3.1 Struttura di un file generato
+### 3.1 Structure of a generated file
 
-Per un controller `PostController` con metodo `show` sulla rotta `GET /posts/{post}`:
+For a `PostController` controller with a `show` method on the `GET /posts/{post}` route:
 
 ```typescript
 // resources/js/actions/App/Http/Controllers/PostController.ts
@@ -243,17 +243,17 @@ export const show = (post: number | string, options?: { query?: QueryParams }) =
 show.url = (post: number | string) => `/posts/${post}`
 ```
 
-### 3.2 Due modi di importare
+### 3.2 Two ways to import
 
-**Named import (consigliato — tree-shaking ottimale):**
+**Named import (recommended — optimal tree-shaking):**
 ```typescript
 import { show, index, store } from '@/actions/App/Http/Controllers/PostController';
 
 show(1)          // { url: '/posts/1', method: 'get' }
-show.url(1)      // '/posts/1'  ← solo l'URL, senza { method }
+show.url(1)      // '/posts/1'  ← URL only, without { method }
 ```
 
-**Default import (importa tutto il controller — attenzione al bundle size):**
+**Default import (imports the whole controller — watch the bundle size):**
 ```typescript
 import PostController from '@/actions/App/Http/Controllers/PostController';
 
@@ -261,92 +261,92 @@ PostController.show(1)
 PostController.index()
 ```
 
-### 3.3 Parametri e route model binding
+### 3.3 Parameters and route model binding
 
 ```typescript
-// Parametro singolo
+// Single parameter
 show(1)
 show('my-slug')
 
-// Route model binding con chiave custom (rotta: /posts/{post:slug})
+// Route model binding with a custom key (route: /posts/{post:slug})
 show('my-new-post')
 show({ slug: 'my-new-post' })
 
-// Parametri multipli (rotta: /venues/{venue}/events/{event})
+// Multiple parameters (route: /venues/{venue}/events/{event})
 showEvent({ venue: 1, event: 2 })
 
-// Query string — equivalente di _query in Ziggy
+// Query string — equivalent of _query in Ziggy
 index({ query: { page: 2, filter: 'active' } })
 ```
 
-### 3.4 Controller invocabili (single action)
+### 3.4 Invokable controllers (single action)
 
 ```typescript
 // Route::post('/contact', SendContactEmailController::class)
 import SendContactEmailController from '@/actions/App/Http/Controllers/SendContactEmailController';
 
-// Si chiama direttamente, senza metodo
+// Called directly, without a method
 SendContactEmailController()   // { url: '/contact', method: 'post' }
 ```
 
-### 3.5 Metodi espliciti e form variants
+### 3.5 Explicit methods and form variants
 
 ```typescript
-// Metodo esplicito (per sovrascrivere quello inferito dal controller)
+// Explicit method (to override the one inferred from the controller)
 update.patch({ post: 1 })   // { url: '/posts/1', method: 'patch' }
 update.put({ post: 1 })     // { url: '/posts/1', method: 'put' }
 
-// Form HTML — aggiunge _method per il method spoofing di Laravel
+// HTML form — adds _method for Laravel's method spoofing
 update.form({ post: 1 })    // { action: '/posts/1?_method=PATCH', method: 'post' }
 destroy.form({ post: 1 })   // { action: '/posts/1?_method=DELETE', method: 'post' }
 update.form.put({ post: 1 }) // { action: '/posts/1?_method=PUT', method: 'post' }
 ```
 
-### 3.6 Rotte con nome (alternativa ai controller)
+### 3.6 Named routes (alternative to controllers)
 
-Wayfinder genera anche file basati sul nome della rotta in `resources/js/routes/`:
+Wayfinder also generates files based on the route name in `resources/js/routes/`:
 
 ```typescript
-// Rotta: Route::get('/posts/{post}', ...)->name('posts.show')
+// Route: Route::get('/posts/{post}', ...)->name('posts.show')
 import { show } from '@/routes/posts';
 
 show(1)  // { url: '/posts/1', method: 'get' }
 ```
 
-Usa questa forma quando preferisci lavorare per nome piuttosto che per controller, o per rotte senza controller (closure, `Route::inertia`).
+Use this form when you prefer to work by name rather than by controller, or for routes without a controller (closures, `Route::inertia`).
 
 ---
 
-## Fase 4 — Tabella di conversione pattern
+## Phase 4 — Pattern conversion table
 
-### 4.1 `<Link>` con Inertia
+### 4.1 `<Link>` with Inertia
 
 ```tsx
-// ❌ PRIMA (Ziggy)
+// ❌ BEFORE (Ziggy)
 import { Link } from '@inertiajs/react';
-<Link href={route('posts.index')}>Lista</Link>
-<Link href={route('posts.show', 1)}>Dettaglio</Link>
-<Link href={route('posts.show', { post: post.id })}>Dettaglio</Link>
-<Link href={route('posts.edit', post.id)}>Modifica</Link>
+<Link href={route('posts.index')}>List</Link>
+<Link href={route('posts.show', 1)}>Details</Link>
+<Link href={route('posts.show', { post: post.id })}>Details</Link>
+<Link href={route('posts.edit', post.id)}>Edit</Link>
 
-// ✅ DOPO (Wayfinder) — named import
+// ✅ AFTER (Wayfinder) — named import
 import { Link } from '@inertiajs/react';
 import { index, show, edit } from '@/actions/App/Http/Controllers/PostController';
 
-<Link href={index()}>Lista</Link>
-<Link href={show(1)}>Dettaglio</Link>
-<Link href={show({ post: post.id })}>Dettaglio</Link>
-<Link href={edit(post.id)}>Modifica</Link>
+<Link href={index()}>List</Link>
+<Link href={show(1)}>Details</Link>
+<Link href={show({ post: post.id })}>Details</Link>
+<Link href={edit(post.id)}>Edit</Link>
 ```
 
-> `<Link href={show(1)}>` funziona perché Inertia (v2.1.2+) accetta sia una stringa che un oggetto `{ url, method }` come `href`.
+> `<Link href={show(1)}>` works because Inertia (v2.1.2+) accepts either a string or a `{ url, method }` object as `href`.
 
 ### 4.2 `router.visit` / `router.get` / `router.post`
 
-Inertia (v2.1.2+) accetta direttamente l'oggetto Wayfinder in tutti i metodi `router.*`:
+Inertia (v2.1.2+) accepts the Wayfinder object directly in all `router.*` methods:
 
 ```tsx
-// ❌ PRIMA (Ziggy)
+// ❌ BEFORE (Ziggy)
 import { router } from '@inertiajs/react';
 router.visit(route('dashboard'));
 router.get(route('posts.index', { _query: { filter: 'active' } }));
@@ -354,7 +354,7 @@ router.post(route('posts.store'), formData);
 router.put(route('posts.update', post.id), formData);
 router.delete(route('posts.destroy', post.id));
 
-// ✅ DOPO (Wayfinder)
+// ✅ AFTER (Wayfinder)
 import { router } from '@inertiajs/react';
 import { index, store, update, destroy } from '@/actions/App/Http/Controllers/PostController';
 import DashboardController from '@/actions/App/Http/Controllers/DashboardController';
@@ -362,16 +362,16 @@ import DashboardController from '@/actions/App/Http/Controllers/DashboardControl
 router.visit(DashboardController.index());
 router.visit(index({ query: { filter: 'active' } }));
 router.visit(store(), { data: formData });
-router.visit(update(post.id), { data: formData }); // il metodo (PUT/PATCH) viene dall'oggetto
-router.visit(destroy(post.id));                     // il metodo (DELETE) viene dall'oggetto
+router.visit(update(post.id), { data: formData }); // the method (PUT/PATCH) comes from the object
+router.visit(destroy(post.id));                     // the method (DELETE) comes from the object
 ```
 
 ### 4.3 `useForm`
 
-Wayfinder si integra nativamente con `useForm` tramite `form.submit()`:
+Wayfinder integrates natively with `useForm` through `form.submit()`:
 
 ```tsx
-// ❌ PRIMA (Ziggy)
+// ❌ BEFORE (Ziggy)
 import { useForm } from '@inertiajs/react';
 const form = useForm({ title: '', body: '' });
 
@@ -380,45 +380,45 @@ form.put(route('posts.update', post.id));
 form.patch(route('posts.update', post.id));
 form.delete(route('posts.destroy', post.id));
 
-// ✅ DOPO (Wayfinder)
+// ✅ AFTER (Wayfinder)
 import { useForm } from '@inertiajs/react';
 import { store, update, destroy } from '@/actions/App/Http/Controllers/PostController';
 
 const form = useForm({ title: '', body: '' });
 
-form.submit(store());                        // POST a /posts
-form.submit(update({ post: post.id }));     // PUT/PATCH a /posts/{id}
-form.submit(destroy({ post: post.id }));    // DELETE a /posts/{id}
+form.submit(store());                        // POST to /posts
+form.submit(update({ post: post.id }));     // PUT/PATCH to /posts/{id}
+form.submit(destroy({ post: post.id }));    // DELETE to /posts/{id}
 ```
 
-> `form.submit()` legge `method` direttamente dall'oggetto Wayfinder: nessuna ambiguità su GET/POST/PUT/DELETE.
+> `form.submit()` reads `method` directly from the Wayfinder object: no ambiguity about GET/POST/PUT/DELETE.
 
 ### 4.4 Query string (`_query` → `query`)
 
 ```tsx
-// ❌ PRIMA (Ziggy) — _query per i parametri extra non presenti nella rotta
+// ❌ BEFORE (Ziggy) — _query for extra parameters not present in the route
 route('posts.index', { _query: { page: 2, search: 'foo', sort: 'asc' } })
 // → /posts?page=2&search=foo&sort=asc
 
-// ✅ DOPO (Wayfinder)
+// ✅ AFTER (Wayfinder)
 import { index } from '@/actions/App/Http/Controllers/PostController';
 
 index({ query: { page: 2, search: 'foo', sort: 'asc' } })
 // → { url: '/posts?page=2&search=foo&sort=asc', method: 'get' }
 
-// Solo l'URL (senza { method }):
+// URL only (without { method }):
 index.url({ query: { page: 2, search: 'foo', sort: 'asc' } })
 // → '/posts?page=2&search=foo&sort=asc'
 ```
 
-### 4.5 Route model binding con oggetto Eloquent
+### 4.5 Route model binding with an Eloquent object
 
 ```tsx
-// ❌ PRIMA (Ziggy) — accetta l'oggetto, usa la chiave 'id' automaticamente
+// ❌ BEFORE (Ziggy) — accepts the object, uses the 'id' key automatically
 const post = { id: 1, title: 'Hello' };
 route('posts.show', post)  // → /posts/1
 
-// ✅ DOPO (Wayfinder) — passa il valore esplicitamente
+// ✅ AFTER (Wayfinder) — pass the value explicitly
 import { show } from '@/actions/App/Http/Controllers/PostController';
 
 show(post.id)              // → { url: '/posts/1', method: 'get' }
@@ -428,51 +428,51 @@ show({ post: post.id })    // → { url: '/posts/1', method: 'get' }
 ### 4.6 `fetch` / `axios`
 
 ```tsx
-// ❌ PRIMA (Ziggy)
+// ❌ BEFORE (Ziggy)
 const res = await fetch(route('api.posts.index'));
 const res = await axios.get(route('api.posts.show', id));
 await axios.post(route('api.posts.store'), payload);
 
-// ✅ DOPO (Wayfinder) — usa .url per estrarre solo la stringa
+// ✅ AFTER (Wayfinder) — use .url to extract just the string
 import { index, show, store } from '@/actions/App/Http/Controllers/Api/PostController';
 
 const res = await fetch(index().url);
 const res = await axios.get(show(id).url);
 await axios.post(store().url, payload);
 
-// Oppure, con axios, passa l'intero oggetto (url + method):
+// Or, with axios, pass the whole object (url + method):
 const { url, method } = store();
 await axios({ method, url, data: payload });
 ```
 
-### 4.7 Controller invocabili (single action)
+### 4.7 Invokable controllers (single action)
 
 ```tsx
-// Rotta: Route::post('/contact', SendContactEmailController::class)->name('contact.send')
+// Route: Route::post('/contact', SendContactEmailController::class)->name('contact.send')
 
-// ❌ PRIMA (Ziggy)
+// ❌ BEFORE (Ziggy)
 router.post(route('contact.send'), formData);
 
-// ✅ DOPO (Wayfinder)
+// ✅ AFTER (Wayfinder)
 import SendContactEmailController from '@/actions/App/Http/Controllers/SendContactEmailController';
 
 router.visit(SendContactEmailController(), { data: formData });
-// oppure con useForm:
+// or with useForm:
 form.submit(SendContactEmailController());
 ```
 
-### 4.8 Form HTML (non-Inertia, con method spoofing)
+### 4.8 HTML forms (non-Inertia, with method spoofing)
 
 ```tsx
-// ✅ WAYFINDER — .form() gestisce il _method spoofing automaticamente
+// ✅ WAYFINDER — .form() handles _method spoofing automatically
 import { update, destroy } from '@/actions/App/Http/Controllers/PostController';
 
-// PATCH con _method spoofing
+// PATCH with _method spoofing
 <form {...update.form({ post: 1 })}>
   {/* renders: action="/posts/1?_method=PATCH" method="post" */}
 </form>
 
-// PUT esplicito
+// Explicit PUT
 <form {...update.form.put({ post: 1 })}>
   {/* renders: action="/posts/1?_method=PUT" method="post" */}
 </form>
@@ -485,11 +485,11 @@ import { update, destroy } from '@/actions/App/Http/Controllers/PostController';
 
 ---
 
-## Fase 5 — Caso speciale: `route().current()`
+## Phase 5 — Special case: `route().current()`
 
-Ziggy offre `route().current('nome.rotta')` per rilevare la rotta attiva. **Wayfinder non ha un equivalente diretto.** Scegli una delle tre alternative:
+Ziggy provides `route().current('route.name')` to detect the active route. **Wayfinder has no direct equivalent.** Choose one of the three alternatives:
 
-### Opzione A — Condividere il nome rotta dal backend (consigliata)
+### Option A — Share the route name from the backend (recommended)
 
 ```php
 // app/Http/Middleware/HandleInertiaRequests.php
@@ -502,17 +502,17 @@ public function share(Request $request): array
 ```
 
 ```tsx
-// Nel componente React
+// In the React component
 import { usePage } from '@inertiajs/react';
 
 const { currentRoute } = usePage().props as { currentRoute: string | null };
 
-// Equivalenti Ziggy → Wayfinder:
+// Ziggy → Wayfinder equivalents:
 // route().current('posts.index')  →  currentRoute === 'posts.index'
 // route().current('posts.*')      →  currentRoute?.startsWith('posts.')
 ```
 
-### Opzione B — Confrontare con `usePage().url`
+### Option B — Compare with `usePage().url`
 
 ```tsx
 import { usePage } from '@inertiajs/react';
@@ -521,7 +521,7 @@ const { url } = usePage();
 const isPostsPage = url.startsWith('/posts');
 ```
 
-### Opzione C — Confrontare l'URL corrente con quello generato da Wayfinder
+### Option C — Compare the current URL with the one generated by Wayfinder
 
 ```tsx
 import { usePage } from '@inertiajs/react';
@@ -533,28 +533,28 @@ const isPostsIndex = url === index().url;
 
 ---
 
-## Fase 6 — Migrazione file per file
+## Phase 6 — File-by-file migration
 
-### 6.1 Ordine consigliato
+### 6.1 Recommended order
 
-1. **Componenti di navigazione e layout** (`resources/js/Layouts/`) — usati ovunque, alto impatto
-2. **Pagine** (`resources/js/Pages/`) — dal più semplice (meno `route()`) al più complesso
-3. **Componenti condivisi** (`resources/js/Components/`)
-4. **Hook e utility** (`resources/js/hooks/`, `resources/js/lib/`)
+1. **Navigation and layout components** (`resources/js/Layouts/`) — used everywhere, high impact
+2. **Pages** (`resources/js/Pages/`) — from the simplest (fewest `route()`) to the most complex
+3. **Shared components** (`resources/js/Components/`)
+4. **Hooks and utilities** (`resources/js/hooks/`, `resources/js/lib/`)
 
-### 6.2 Procedura per ogni file
+### 6.2 Procedure for each file
 
-Per ogni file con utilizzi di `route()`:
+For each file with `route()` usages:
 
-1. **Identifica le rotte usate** — `grep "route(" resources/js/path/al/File.tsx`
-2. **Trova il controller** — cerca il nome rotta in `routes/web.php` oppure con `sail artisan route:list --name=nome.rotta`
-3. **Verifica il file generato** — `cat resources/js/actions/App/Http/Controllers/NomeController.ts`
-4. **Sostituisci** ogni `route('nome', params)` con l'import e la chiamata corretta
-5. **Aggiungi gli import** in cima al file
-6. **Rimuovi** eventuali import di `ziggy-js` dal file
-7. **Controlla TypeScript** — `sail pnpm exec tsc --noEmit`
+1. **Identify the routes used** — `grep "route(" resources/js/path/to/File.tsx`
+2. **Find the controller** — look up the route name in `routes/web.php` or with `sail artisan route:list --name=route.name`
+3. **Check the generated file** — `cat resources/js/actions/App/Http/Controllers/NameController.ts`
+4. **Replace** every `route('name', params)` with the correct import and call
+5. **Add the imports** at the top of the file
+6. **Remove** any `ziggy-js` imports from the file
+7. **Check TypeScript** — `sail pnpm exec tsc --noEmit`
 
-### 6.3 Gestire rotte senza controller (closures / Route::inertia)
+### 6.3 Handling routes without a controller (closures / Route::inertia)
 
 ```php
 // routes/web.php
@@ -562,28 +562,28 @@ Route::get('/about', fn() => inertia('About'))->name('about');
 Route::inertia('/faq', 'Faq')->name('faq');
 ```
 
-Per queste rotte Wayfinder non genera nulla in `actions/` (nessun controller). Usa i file in `routes/`:
+For these routes Wayfinder generates nothing in `actions/` (no controller). Use the files in `routes/`:
 
 ```typescript
 import { about } from '@/routes/about';
 import { faq } from '@/routes/faq';
 
-<Link href={about()}>Chi siamo</Link>
+<Link href={about()}>About us</Link>
 <Link href={faq()}>FAQ</Link>
 ```
 
-Se la rotta non ha nome, hai due opzioni: darle un nome, oppure passare l'URL come stringa hardcoded (`href="/about"`).
+If the route has no name, you have two options: give it a name, or pass the URL as a hardcoded string (`href="/about"`).
 
 ---
 
-## Fase 7 — Rimozione Ziggy
+## Phase 7 — Removing Ziggy
 
-Esegui questa fase solo quando **tutti** i `route()` nel frontend sono stati sostituiti e `sail pnpm exec tsc --noEmit` non riporta errori.
+Run this phase only when **all** `route()` calls in the frontend have been replaced and `sail pnpm exec tsc --noEmit` reports no errors.
 
-### 7.1 Rimuovi `@routes` dai layout Blade
+### 7.1 Remove `@routes` from the Blade layouts
 
 ```blade
-{{-- PRIMA --}}
+{{-- BEFORE --}}
 <head>
     @routes
     @viteReactRefresh
@@ -591,7 +591,7 @@ Esegui questa fase solo quando **tutti** i `route()` nel frontend sono stati sos
     @inertiaHead
 </head>
 
-{{-- DOPO --}}
+{{-- AFTER --}}
 <head>
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.tsx'])
@@ -599,10 +599,10 @@ Esegui questa fase solo quando **tutti** i `route()` nel frontend sono stati sos
 </head>
 ```
 
-### 7.2 Rimuovi Ziggy da `HandleInertiaRequests`
+### 7.2 Remove Ziggy from `HandleInertiaRequests`
 
 ```php
-// PRIMA
+// BEFORE
 use Tightenco\Ziggy\Ziggy;
 
 public function share(Request $request): array
@@ -615,19 +615,19 @@ public function share(Request $request): array
     ]);
 }
 
-// DOPO — rimuovi la chiave ziggy (e l'use statement)
+// AFTER — remove the ziggy key (and the use statement)
 public function share(Request $request): array
 {
     return array_merge(parent::share($request), [
-        // Se hai implementato l'Opzione A per route().current():
+        // If you implemented Option A for route().current():
         'currentRoute' => $request->route()?->getName(),
     ]);
 }
 ```
 
-### 7.3 Rimuovi Ziggy da `app.tsx`
+### 7.3 Remove Ziggy from `app.tsx`
 
-Cerca e rimuovi tutti questi pattern:
+Find and remove all of these patterns:
 
 ```typescript
 import route from 'ziggy-js';
@@ -637,24 +637,24 @@ window.route = route;
 (window as any).route = route;
 ```
 
-### 7.4 Rimuovi le dichiarazioni di tipo globali Ziggy
+### 7.4 Remove the global Ziggy type declarations
 
 ```bash
 grep -rn "ziggy\|RouteParam\|ZiggyConfig\|route: typeof routeFn" \
   resources/js --include="*.d.ts" --include="*.ts"
 ```
 
-Rimuovi le sezioni trovate, tipicamente:
+Remove the sections found, typically:
 
 ```typescript
-// Da rimuovere dai file .d.ts
+// To be removed from .d.ts files
 import { route as routeFn } from 'ziggy-js';
 declare global {
     var route: typeof routeFn;
 }
 ```
 
-### 7.5 Disinstalla i pacchetti
+### 7.5 Uninstall the packages
 
 ```bash
 sail composer remove tightenco/ziggy
@@ -663,46 +663,46 @@ sail pnpm remove ziggy-js
 
 ---
 
-## Fase 8 — Laravel Boost: aggiornamento guidelines e skills
+## Phase 8 — Laravel Boost: updating guidelines and skills
 
-> ⚠️ **Fase critica, non saltarla.** Boost genera le guidelines e gli skill in base ai pacchetti presenti in `composer.json`. Finché non le aggiorni, restano quelle di Ziggy e gli agent continueranno a scrivere `route('nome.rotta')` anche se Ziggy è già stato disinstallato.
+> ⚠️ **Critical phase, do not skip it.** Boost generates guidelines and skills based on the packages present in `composer.json`. Until you update them, they remain the Ziggy ones and agents will keep writing `route('route.name')` even though Ziggy has already been uninstalled.
 
-Boost include sia una **AI guideline** per Wayfinder (versione `core`) sia uno **skill** dedicato `wayfinder-development`. Aggiornare Boost è quindi sufficiente: le istruzioni corrette su come usare Wayfinder arrivano dal pacchetto, non vanno scritte a mano.
+Boost includes both an **AI guideline** for Wayfinder (`core` version) and a dedicated **skill** `wayfinder-development`. Updating Boost is therefore sufficient: the correct instructions on how to use Wayfinder come from the package; they do not need to be written by hand.
 
-### 8.1 Aggiorna la dipendenza
+### 8.1 Update the dependency
 
 ```bash
 sail composer update laravel/boost
 ```
 
-Se Boost non è installato nel progetto:
+If Boost is not installed in the project:
 
 ```bash
 sail composer require laravel/boost --dev
 sail artisan boost:install
 ```
 
-Durante il wizard di `boost:install`, seleziona gli agent in uso (Claude Code) e abilita guidelines e skills.
+During the `boost:install` wizard, select the agents in use (Claude Code) and enable guidelines and skills.
 
-### 8.2 Aggiorna le risorse Boost
+### 8.2 Update the Boost resources
 
-Il comando `boost:update` rigenera guidelines e skills locali allineandole ai pacchetti installati:
+The `boost:update` command regenerates the local guidelines and skills, aligning them with the installed packages:
 
 ```bash
 sail artisan boost:update
 ```
 
-> 🔑 **Nel contesto di questa migrazione serve `--discover`.** Per default `boost:update` aggiorna solo le risorse già pubblicate nell'applicazione. Wayfinder è un pacchetto appena installato, quindi va usata l'opzione che fa scansionare il progetto alla ricerca di nuovi pacchetti e propone di pubblicare le relative guidelines e skills:
+> 🔑 **In the context of this migration you need `--discover`.** By default `boost:update` only updates the resources already published in the application. Wayfinder is a newly installed package, so you must use the option that makes it scan the project for new packages and offer to publish their guidelines and skills:
 
 ```bash
 sail artisan boost:update --discover
 ```
 
-Accetta la pubblicazione delle risorse Wayfinder quando il comando le propone.
+Accept publishing the Wayfinder resources when the command offers them.
 
-### 8.3 Automatizza gli aggiornamenti futuri
+### 8.3 Automate future updates
 
-Aggiungi `boost:update` agli script Composer, così le guidelines restano allineate a ogni `composer update`:
+Add `boost:update` to the Composer scripts, so the guidelines stay aligned on every `composer update`:
 
 ```json
 {
@@ -714,81 +714,81 @@ Aggiungi `boost:update` agli script Composer, così le guidelines restano alline
 }
 ```
 
-### 8.4 Verifica che i riferimenti a Ziggy siano spariti
+### 8.4 Verify that the Ziggy references are gone
 
 ```bash
-# Guidelines e skills di Boost
+# Boost guidelines and skills
 grep -rn "ziggy\|Ziggy" .ai/ 2>/dev/null
 
-# File di contesto degli agent generati da Boost
+# Agent context files generated by Boost
 grep -rn "ziggy\|Ziggy" CLAUDE.md AGENTS.md 2>/dev/null
 
-# Verifica che le risorse Wayfinder siano state pubblicate
+# Verify that the Wayfinder resources have been published
 ls .ai/skills/ | grep wayfinder
 grep -rln "wayfinder\|Wayfinder" .ai/ CLAUDE.md 2>/dev/null
 ```
 
-Ti aspetti di trovare lo skill `wayfinder-development` in `.ai/skills/` e nessuna occorrenza di Ziggy.
+You expect to find the `wayfinder-development` skill in `.ai/skills/` and no occurrences of Ziggy.
 
-> I file generati da Boost (`.mcp.json`, `CLAUDE.md`, `AGENTS.md`, `boost.json`) sono rigenerabili con `boost:install` / `boost:update`: la documentazione suggerisce di metterli in `.gitignore`. Se nel tuo progetto sono versionati, ricordati di committare le modifiche dopo l'update.
+> The files generated by Boost (`.mcp.json`, `CLAUDE.md`, `AGENTS.md`, `boost.json`) can be regenerated with `boost:install` / `boost:update`: the documentation suggests putting them in `.gitignore`. If they are versioned in your project, remember to commit the changes after the update.
 
-### 8.5 Se le guidelines Boost non bastano
+### 8.5 If the Boost guidelines are not enough
 
-Solo se dopo `boost:update --discover` l'agent continua a generare `route()` — tipicamente perché il progetto ha un `CLAUDE.md` scritto a mano con istruzioni Ziggy pre-esistenti, indipendenti da Boost — aggiungi guidelines custom.
+Only if, after `boost:update --discover`, the agent keeps generating `route()` — typically because the project has a hand-written `CLAUDE.md` with pre-existing Ziggy instructions, independent of Boost — add custom guidelines.
 
-Boost carica automaticamente i file `.md` o `.blade.php` presenti in `.ai/guidelines/`, includendoli nelle proprie guidelines al successivo `boost:install`. Crea `.ai/guidelines/wayfinder-project.md`:
+Boost automatically loads the `.md` or `.blade.php` files present in `.ai/guidelines/`, including them in its own guidelines on the next `boost:install`. Create `.ai/guidelines/wayfinder-project.md`:
 
 ```markdown
-## Routing frontend — questo progetto usa Wayfinder, NON Ziggy
+## Frontend routing — this project uses Wayfinder, NOT Ziggy
 
-Ziggy è stato rimosso dal progetto. La funzione globale `route()` non esiste più
-nel codice TypeScript/React.
+Ziggy has been removed from the project. The global `route()` function no longer exists
+in the TypeScript/React code.
 
-- **NON usare** `route('nome.rotta')` né alcun import da `ziggy-js`.
-- Importa le funzioni pre-generate: `import { show } from '@/actions/App/Http/Controllers/PostController'`
-- Per rotte senza controller (closure, `Route::inertia`): `import { nome } from '@/routes/nome'`
-- Per rilevare la rotta attiva usa la prop condivisa `currentRoute`, non `route().current()`.
-- Prima di scrivere codice che genera URL, controlla la firma della funzione nel file
-  generato in `resources/js/actions/`.
-- Le cartelle `resources/js/wayfinder/`, `actions/` e `routes/` sono in `.gitignore`
-  e rigenerate a ogni build: non modificarle mai a mano.
+- **DO NOT use** `route('route.name')` or any import from `ziggy-js`.
+- Import the pre-generated functions: `import { show } from '@/actions/App/Http/Controllers/PostController'`
+- For routes without a controller (closures, `Route::inertia`): `import { name } from '@/routes/name'`
+- To detect the active route use the shared `currentRoute` prop, not `route().current()`.
+- Before writing code that generates URLs, check the function signature in the file
+  generated in `resources/js/actions/`.
+- The `resources/js/wayfinder/`, `actions/` and `routes/` folders are in `.gitignore`
+  and regenerated on every build: never modify them by hand.
 ```
 
-Poi rigenera:
+Then regenerate:
 
 ```bash
 sail artisan boost:install
 ```
 
-> Boost supporta anche l'**override** delle sue guidelines built-in: creando un file con lo stesso path di una guideline Boost, la tua versione sostituisce quella di default. Usalo solo se devi cambiare le istruzioni Wayfinder ufficiali, non per aggiungerne.
+> Boost also supports **overriding** its built-in guidelines: by creating a file with the same path as a Boost guideline, your version replaces the default one. Use it only if you need to change the official Wayfinder instructions, not to add to them.
 
-### 8.6 Verifica che l'agent segua le nuove istruzioni
+### 8.6 Verify that the agent follows the new instructions
 
-Apri una **nuova sessione** di Claude Code (le guidelines vengono caricate all'avvio) e testa con una richiesta che richiede una rotta:
+Open a **new session** of Claude Code (guidelines are loaded at startup) and test with a request that requires a route:
 
 ```
-Aggiungi un link alla pagina di modifica del post nella tabella dei post
+Add a link to the post edit page in the posts table
 ```
 
-L'output deve importare da `@/actions/...` e **non** contenere `route(`. Se ancora usa `route()`, in ordine:
+The output must import from `@/actions/...` and must **not** contain `route(`. If it still uses `route()`, in order:
 
-1. Verifica che `boost:update --discover` sia andato a buon fine e che `.ai/skills/wayfinder-development/` esista
-2. Controlla che `.ai/` e `CLAUDE.md` non contengano guidelines Ziggy residue (grep del punto 8.4)
-3. Aggiungi la guideline custom del punto 8.5 e rilancia `sail artisan boost:install`
+1. Verify that `boost:update --discover` completed successfully and that `.ai/skills/wayfinder-development/` exists
+2. Check that `.ai/` and `CLAUDE.md` contain no leftover Ziggy guidelines (grep from step 8.4)
+3. Add the custom guideline from step 8.5 and re-run `sail artisan boost:install`
 
 ---
 
-## Fase 9 — Verifica finale
+## Phase 9 — Final verification
 
-### 9.1 Nessun residuo Ziggy
+### 9.1 No Ziggy leftovers
 
 ```bash
-# Frontend — nessun route() o import ziggy
+# Frontend — no route() or ziggy imports
 grep -rn "ziggy\|route(" resources/js \
   --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" \
   | grep -v "node_modules"
 
-# Backend e Blade
+# Backend and Blade
 grep -rn "@routes\|Ziggy\|ziggy" \
   resources/views app \
   --include="*.php" --include="*.blade.php"
@@ -796,77 +796,77 @@ grep -rn "@routes\|Ziggy\|ziggy" \
 # Package files
 grep -i "ziggy" composer.json package.json
 
-# Guidelines Boost e file di contesto degli agent
+# Boost guidelines and agent context files
 grep -rn "ziggy\|Ziggy" .ai/ CLAUDE.md AGENTS.md 2>/dev/null
 ```
 
-### 9.2 TypeScript senza errori
+### 9.2 TypeScript with no errors
 
 ```bash
 sail pnpm exec tsc --noEmit
 ```
 
-### 9.3 Build di produzione
+### 9.3 Production build
 
 ```bash
-# Genera i tipi prima di buildare (workaround bug #55)
+# Generate the types before building (workaround for bug #55)
 sail artisan wayfinder:generate && sail pnpm build
 ```
 
-### 9.4 Smoke test funzionale
+### 9.4 Functional smoke test
 
 ```bash
 sail up -d
 sail pnpm dev
 ```
 
-Verifica manualmente nel browser:
-- navigazione tra pagine (Link)
-- submit di form (`useForm`)
-- chiamate API (`fetch` / `axios`)
-- active state sulla navigazione (se hai implementato l'Opzione A/B/C per `route().current()`)
+Verify manually in the browser:
+- navigation between pages (Link)
+- form submission (`useForm`)
+- API calls (`fetch` / `axios`)
+- active state in the navigation (if you implemented Option A/B/C for `route().current()`)
 
 ---
 
-## Checklist finale
+## Final checklist
 
 ```
-[ ] Wayfinder installato (sail composer require + sail pnpm add)
-[ ] Plugin Vite (@laravel/vite-plugin-wayfinder) configurato in vite.config.ts
-[ ] Prima generazione eseguita: sail artisan wayfinder:generate
-[ ] Cartelle generate (wayfinder/, actions/, routes/) aggiunte a .gitignore
-[ ] Alias @ in tsconfig.json punta a resources/js
-[ ] Tutti i route('nome', params) sostituiti con import da @/actions/ o @/routes/
-[ ] _query: {} sostituito con { query: {} }
-[ ] form.post/put/patch/delete(route()) sostituito con form.submit(controller.method())
-[ ] router.visit/get/post/delete(route()) aggiornati con oggetti Wayfinder
-[ ] route().current() sostituito con currentRoute prop o url comparison
-[ ] Rotte senza controller (closure/inertia) gestite tramite @/routes/
-[ ] @routes rimosso dai layout Blade
-[ ] HandleInertiaRequests ripulito (use Ziggy rimosso, chiave ziggy rimossa)
-[ ] Import e dichiarazioni Ziggy rimosse da app.tsx e file .d.ts
-[ ] sail composer remove tightenco/ziggy eseguito
-[ ] sail pnpm remove ziggy-js eseguito
-[ ] laravel/boost aggiornato: sail composer update laravel/boost
-[ ] Risorse Boost aggiornate: sail artisan boost:update --discover
-[ ] Risorse Wayfinder pubblicate (.ai/skills/wayfinder-development/ presente)
-[ ] Nessun riferimento a Ziggy in .ai/ e CLAUDE.md (verificato con grep)
-[ ] boost:update aggiunto a post-update-cmd in composer.json (opzionale)
-[ ] Verificato in una nuova sessione che l'agent generi import da @/actions/ e non route()
-[ ] sail pnpm exec tsc --noEmit senza errori
-[ ] sail artisan wayfinder:generate && sail pnpm build senza errori
-[ ] Smoke test funzionale superato
+[ ] Wayfinder installed (sail composer require + sail pnpm add)
+[ ] Vite plugin (@laravel/vite-plugin-wayfinder) configured in vite.config.ts
+[ ] First generation run: sail artisan wayfinder:generate
+[ ] Generated folders (wayfinder/, actions/, routes/) added to .gitignore
+[ ] @ alias in tsconfig.json points to resources/js
+[ ] All route('name', params) replaced with imports from @/actions/ or @/routes/
+[ ] _query: {} replaced with { query: {} }
+[ ] form.post/put/patch/delete(route()) replaced with form.submit(controller.method())
+[ ] router.visit/get/post/delete(route()) updated with Wayfinder objects
+[ ] route().current() replaced with currentRoute prop or url comparison
+[ ] Routes without a controller (closure/inertia) handled via @/routes/
+[ ] @routes removed from the Blade layouts
+[ ] HandleInertiaRequests cleaned up (use Ziggy removed, ziggy key removed)
+[ ] Ziggy imports and declarations removed from app.tsx and .d.ts files
+[ ] sail composer remove tightenco/ziggy run
+[ ] sail pnpm remove ziggy-js run
+[ ] laravel/boost updated: sail composer update laravel/boost
+[ ] Boost resources updated: sail artisan boost:update --discover
+[ ] Wayfinder resources published (.ai/skills/wayfinder-development/ present)
+[ ] No references to Ziggy in .ai/ and CLAUDE.md (verified with grep)
+[ ] boost:update added to post-update-cmd in composer.json (optional)
+[ ] Verified in a new session that the agent generates imports from @/actions/ and not route()
+[ ] sail pnpm exec tsc --noEmit with no errors
+[ ] sail artisan wayfinder:generate && sail pnpm build with no errors
+[ ] Functional smoke test passed
 ```
 
 ---
 
-## Riferimenti
+## References
 
 - [laravel/wayfinder — GitHub (stable)](https://github.com/laravel/wayfinder)
 - [laravel/wayfinder — GitHub (next beta)](https://github.com/laravel/wayfinder/tree/next)
 - [tighten/ziggy — GitHub](https://github.com/tighten/ziggy)
-- [Inertia.js — Manual Visits con Wayfinder](https://inertiajs.com/manual-visits)
+- [Inertia.js — Manual Visits with Wayfinder](https://inertiajs.com/manual-visits)
 - [Inertia.js — Routing](https://inertiajs.com/routing)
 - [Laravel Boost — Keeping Boost Resources Updated](https://laravel.com/docs/13.x/boost#keeping-boost-resources-updated)
 - [Laravel Boost — AI Guidelines](https://laravel.com/docs/13.x/boost#ai-guidelines)
-- [Issue nota #55 — bug build Vite](https://github.com/laravel/wayfinder/issues/55)
+- [Known issue #55 — Vite build bug](https://github.com/laravel/wayfinder/issues/55)

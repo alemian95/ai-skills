@@ -1,6 +1,6 @@
 ---
 name: adr-writer
-description: Turn decisions made during an implementation or brainstorming session into Architecture Decision Records (Nygard format), reconstructing context and rationale from the conversation, from git history, and from the existing docs. Use this skill whenever the user asks to document a decision, write an ADR, record why something was chosen, capture the outcome of a design discussion, or says things like "documentiamo questa scelta", "scrivi un ADR", "teniamo traccia di questa decisione", "perché abbiamo fatto così?" — and also proactively offer it at the end of any session where a non-trivial architectural choice was settled, even if the user never says the word "ADR".
+description: Turn decisions made during an implementation or brainstorming session into Architecture Decision Records (Nygard format), reconstructing context and rationale from the conversation, from git history, and from the existing docs. Use this skill whenever the user asks to document a decision, write an ADR, record why something was chosen, capture the outcome of a design discussion, or says things like "let's document this choice", "write an ADR", "let's keep track of this decision", "why did we do it this way?" — and also proactively offer it at the end of any session where a non-trivial architectural choice was settled, even if the user never says the word "ADR".
 ---
 
 # ADR Writer
@@ -51,7 +51,7 @@ git log -S "<identifier>" --oneline   # when a specific construct appeared
 git log --oneline -- <path>           # history of the affected area
 ```
 
-Cite commits by short hash in Context when they establish a fact ("introdotto in `a1b2c3d`"). Do not paste diffs into the ADR — an ADR records the decision, not the implementation.
+Cite commits by short hash in Context when they establish a fact ("introduced in `a1b2c3d`"). Do not paste diffs into the ADR — an ADR records the decision, not the implementation.
 
 If the code contradicts what the session concluded (the decision was discussed but not implemented, or implemented differently), stop and report the discrepancy to the user. This is a common and important catch.
 
@@ -64,7 +64,7 @@ If the code contradicts what the session concluded (the decision was discussed b
 Use this exact structure:
 
 ```markdown
-# NNNN. <Titolo: sostantivo, la decisione, non il problema>
+# NNNN. <Title: noun phrase, the decision, not the problem>
 
 Date: YYYY-MM-DD
 
@@ -78,14 +78,14 @@ Date: YYYY-MM-DD
 
 ## Decision
 
-<The choice. Active voice, "Adottiamo..." / "We will...">
+<The choice. Active voice, "We will...">
 
 ## Consequences
 
 <What becomes easier, harder, or newly required — after this is applied.>
 ```
 
-**Title.** Names the decision, not the problem area. `0007. Uso di LTI 1.3 per l'autenticazione dei contenuti SCORM`, not `0007. Problemi di sicurezza SCORM`. No verbs like "Decidere di".
+**Title.** Names the decision, not the problem area. `0007. Use of LTI 1.3 for SCORM content authentication`, not `0007. SCORM security issues`. No verbs like "Deciding to".
 
 **Status.** `Accepted` when the decision is in force. `Proposed` when it was agreed in principle but not implemented — check the repo before choosing. If it replaces an earlier ADR, set this one to `Accepted` and update the old one to `Superseded by`; never silently delete or rewrite a superseded ADR.
 
@@ -130,7 +130,7 @@ Then place the ADRs in the position that scheme implies, following its naming st
 
 Once the location is settled, state it explicitly in the final report so it is on the record for later sessions.
 
-**Filename.** Default `NNNN-slug-del-titolo.md`: four digits, zero-padded, sequential. Take the number from the highest existing ADR, not from a count of files — gaps happen. Slug from the title, lowercase, hyphenated, no accents. Adapt casing, separator, and language to the local convention when the project has one, but keep the numeric prefix regardless: supersede references and ordering depend on it.
+**Filename.** Default `NNNN-title-slug.md`: four digits, zero-padded, sequential. Take the number from the highest existing ADR, not from a count of files — gaps happen. Slug from the title, lowercase, hyphenated, no accents. Adapt casing, separator, and language to the local convention when the project has one, but keep the numeric prefix regardless: supersede references and ordering depend on it.
 
 If an `index.md` or `README.md` lists the ADRs, or indexes the directory the ADR lands in, add the new entry. Do not create such an index unprompted.
 
@@ -151,4 +151,4 @@ Extracted:
 - Open → whether Actions may call other Actions. Not in the ADR; reported to the user.
 - Gap → `handle()` vs `__invoke()` was settled without a stated reason. Asked; the user answered that `handle()` allows named secondary methods. Now recordable.
 
-Result: `docs/adr/0012-actions-per-l-orchestrazione-e-services-per-la-logica-riusabile.md`, Status `Accepted`, with `HEAD~3..HEAD` cited in Context as evidence the pattern is already applied.
+Result: `docs/adr/0012-actions-for-orchestration-and-services-for-reusable-logic.md`, Status `Accepted`, with `HEAD~3..HEAD` cited in Context as evidence the pattern is already applied.

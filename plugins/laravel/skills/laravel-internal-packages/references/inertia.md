@@ -57,8 +57,8 @@ Trade-off: package pages lose the modulepreload hint and load through the dynami
 
 ```ts
 // resources/js/lib/package-slots.ts
-/** Every slot the core mounts. New slot = mount <PackageSlot name="…"> in a core page + add it here. */
-export type SlotName = 'dashboard-widgets' | 'sidebar-links' | 'settings-nav';
+/** Exactly the slots the core mounts, no more. New slot = mount <PackageSlot name="…"> in a core page + add it here. */
+export type SlotName = 'dashboard-widgets';
 
 export type SlotMap = Partial<Record<SlotName, unknown>>;
 
@@ -149,7 +149,7 @@ Mount point in a core page, with no condition on who fills it:
 <PackageSlot name="dashboard-widgets" :user="user" />
 ```
 
-Context props say **what** the slot is rendering for (the user on this page), not the package's data. The contribution fetches its own data (own endpoint, own page props, deferred props).
+Context props say **what** the slot is rendering for (the user on this page), not the package's data. The contribution fetches its own data from its own endpoint (Wayfinder route, `fetch`/`useHttp`/axios as the kit does). Core page props are not extended for it.
 
 ## Package side
 

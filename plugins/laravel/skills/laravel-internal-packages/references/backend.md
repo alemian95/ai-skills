@@ -156,7 +156,7 @@ final class BillingServiceProvider extends PackageServiceProvider
         $this->loadViewsFrom($this->path('resources/views'), 'billing');
         $this->loadTranslationsFrom($this->path('lang'), 'billing');
 
-        Event::listen(UserRegistered::class, CreateBillingProfile::class);
+        Event::listen(UserCreated::class, CreateBillingProfile::class);
 
         User::resolveRelationUsing('billingProfile', fn (User $user) => $user->hasOne(BillingProfile::class));
     }
@@ -190,23 +190,24 @@ Route::middleware(['web', 'auth', 'verified'])->group(function (): void {
 
 | Case | Allowed |
 |---|---|
-| Package tables (prefix `<name>_`), with foreign keys to core tables | ✅ |
+| Package tables (prefix `<name>_`), with foreign keys to core tables declared `cascadeOnDelete()` or `nullOnDelete()` | ✅ a `restrict` FK would make the core fail to delete its own rows, even after the package is disabled |
 | Relation from a core model to package data via `Model::resolveRelationUsing()` in `bootPackage()` | ✅ |
 | Package migration that alters a core table | ❌ the core schema is changed only by the core |
 | Generic nullable column on a core table, added by a **core** migration, whose name describes a core concept | ✅ existing rows stay null |
 | The same column as `is_<package>` or `<package>_id` | ❌ it names the package without writing the name |
 | One more case in a core enum | ⚠️ only if all core code that switches on the enum handles it |
 
-Migrations are loaded only when the package is enabled. Disabling it later leaves its tables in place, inert. Full removal: `php artisan migrate:rollback --path=packages/<name>/database/migrations` on every instance that had it, then `composer remove`.
+Migrations are loaded only when the package is enabled. Disabling it later leaves its tables in place, inert. Full removal: `php artisan migrate:reset --path=packages/<name>/database/migrations` (not `rollback`, which only looks at the last batch) on every instance that had it, then `composer remove packages/<name>` **and** delete `packages/<name>/` (git history keeps it). A folder left on disk is still picked up by the `packages/*` globs of Vite, the test suite and the arch tests.
 
 ## Reacting to core facts: events
 
-- The core emits a domain event on the **fact** (user created, order paid), not on the channel. `Registered` covers only self sign-up, while a user created by an admin or an import is the same fact.
+- The core emits a domain event on the **fact** (`UserCreated`, `OrderPaid`), not on the channel. `Registered` covers only self sign-up, while a user created by an admin or an import is the same fact. `$dispatchesEvents = ['created' => UserCreated::class]` on the model covers every channel in one place. Trade-off: factories and seeders fire it too.
 - The core event implements `ShouldDispatchAfterCommit` when it is emitted inside a transaction.
 - The payload carries core models and core concepts only. If packages need input the core does not understand (extra form fields, extra import columns), pass it as an opaque array built by one core helper. Don't add typed fields for concepts the core doesn't own.
 - Listeners are registered in `bootPackage()` (`Event::listen`), because event discovery does not scan `packages/`.
 - The listener never joins the core's transaction. Default to `ShouldQueue`. A sync listener that throws breaks the core request (or, in a row-by-row import, marks a written row as failed), so if it must stay sync, catch and log inside it and say so in its docblock.
-- A listener that must catch up on data written before the package was enabled gets a backfill command in the package.
+- A listener that must catch up on data written before the package was enabled gets a backfill command in the package, sharing the listener's Action.
+- Queued jobs outlive the switch: jobs already queued still run after the instance flag goes off (with the package's bindings and config gone), and fail with *class not found* after `composer remove`. Drain the package's jobs before switching it off.
 
 ## Adding to core outputs: contribution registries
 
@@ -221,6 +222,9 @@ interface UsersExportColumns
 
     /** @return list<scalar|null> one value per heading */
     public function values(User $user): array;
+
+    /** @return list<string> relations to eager-load: package data almost always sits on a relation */
+    public function relations(): array;
 }
 ```
 
@@ -277,7 +281,7 @@ Rules:
 
 - **Append, never insert.** Core outputs often have positional meaning (column letters for formats and validation). A contribution placed in the middle shifts them without raising any error.
 - Order is the provider registration order, and nothing is de-duplicated. With a single contributor this is theory. With two or more, decide it explicitly.
-- A contributor that needs relations declares them (e.g. `relations(): array`) so the core can eager-load them. Otherwise the export goes N+1.
+- The core query eager-loads every contributor's `relations()`. Otherwise the export goes N+1.
 - The contract declares no constructor. Contributors are built by the container and inject what they need.
 - **Neutrality test is mandatory**: with no contributor, the output is identical to the core's own. See `verification.md`.
 - The second registry must follow this same shape. If a third hook point of a different shape appears, stop and ask whether the core needs one extension mechanism instead of three.
@@ -291,7 +295,14 @@ Rules:
 'packages' => config('packages.enabled', []),
 ```
 
-A package's data reaches its UI through its own endpoints, its own page props, deferred props, or context props that the host slot passes ("render for *this* user"). A package never adds a global share of its data.
+A package's data reaches its UI this way:
+
+- **Package pages:** their own controller props (deferred props included).
+- **Slot contributions inside core pages:** the package's own endpoint, plus the context props the host slot passes ("render for *this* user"). A core page's props are not the package's to extend.
+
+A package never adds a global share of its data.
+
+**Authorization concepts belong to the core.** If the package needs "admin", the core must already have it (roles, abilities), and the package builds on it: `Gate::define('billing.manage', fn (User $u) => $u->can('manage-settings'))` in `bootPackage()`. Whether a slot contribution is visible to the current user is decided server-side, by the package endpoint or by abilities the core already shares, never by a new global share.
 
 ## Inside a package
 

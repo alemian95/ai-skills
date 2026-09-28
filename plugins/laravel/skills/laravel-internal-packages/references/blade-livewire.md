@@ -16,11 +16,10 @@ packages/<name>/
 ```php
 namespace App\Packages;
 
-/** Every slot the core mounts. New slot = <x-package-slot name="…"> in a core view + a case here. */
+/** Exactly the slots the core mounts, no more. New slot = <x-package-slot name="…"> in a core view + a case here. */
 enum Slot: string
 {
     case DashboardCards = 'dashboard-cards';
-    case NavItems = 'nav-items';
 }
 ```
 
@@ -88,7 +87,8 @@ protected function bootPackage(): void
         classPath: $this->path('src/Livewire'),
         classViewPath: $this->path('resources/views/livewire'),
     );
-    // Livewire 3: one explicit registration per component (auto-discovery covers only app/Livewire)
+    // Livewire 3: one explicit registration per component (auto-discovery covers only app/Livewire),
+    // and the tag becomes <livewire:billing.redeem-points /> in the views below.
     // Livewire::component('billing.redeem-points', RedeemPoints::class);
 
     $this->app->make(ViewSlots::class)->add(Slot::DashboardCards, 'billing::slots.dashboard-card', order: 50);
@@ -107,7 +107,8 @@ Rules:
 - **Livewire public methods are HTTP endpoints.** Authorize inside every action (`$this->authorize(...)`) and don't rely on the view having been reached. Security belongs to the package.
 - Full-page Livewire components are routed from the package route file, with explicit `web`/auth middleware (see `backend.md` → *Routes*).
 - Livewire 4 filenames: avoid the ⚡ prefix inside packages, because it can break Composer.
-- Menu entries into package pages are slot contributions (`Slot::NavItems`), not core links.
+- Check the registration API against the installed Livewire version (Boost `search-docs` if available) before writing it. `addNamespace` is Livewire 4.
+- Menu entries into package pages are slot contributions (a nav slot, added to the enum when the first package needs it), not core links.
 
 ## Assets
 

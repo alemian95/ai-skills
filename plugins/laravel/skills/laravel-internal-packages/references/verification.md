@@ -37,6 +37,7 @@ pest()->extend(Tests\TestCase::class)
 // tests/Arch/PackagesTest.php
 use Illuminate\Support\Str;
 
+// toUse() matches by namespace prefix: `Packages\…` is caught, the core's `App\Packages\…` is not.
 arch('the core never uses a package')
     ->expect(['App', 'Database'])
     ->not->toUse('Packages');
@@ -63,7 +64,8 @@ Arch tests see PHP symbols. They miss strings: `'billing::settings'`, `<livewire
 ```bash
 for dir in packages/*/; do
     name=$(basename "$dir")
-    git grep -niw "$name" -- app bootstrap config database routes resources && echo "core references '$name'"
+    git grep -niw "$name" -- app bootstrap config database routes resources tests \
+        ':(glob)*.config.*' tsconfig.json phpunit.xml && echo "core references '$name'"
 done
 ```
 
@@ -122,7 +124,14 @@ Every hook point in the core (event, registry, slot mount, panel line) needs pro
 
 - **Registry:** capture the core output (e.g. the export file) as a golden fixture **before** introducing the hook, and assert it stays identical with an empty registry, built directly (`new UsersExport([])`), because in the test suite packages are on and the container would inject their contributors. Add a second test with a fake contributor: its columns come last, padded or cut to its headings.
 - **Event:** `Event::fake()` + assert it is dispatched on every channel that produces the fact (form, import, API), and the core flow's result is unchanged with no listener.
-- **Slot / render hook:** the core page renders the same with no contribution.
+- **Slot / render hook:** with packages off, the core page renders without errors and shows no contribution. Inertia slots are client-side, so this needs a browser test (Pest 4):
+
+  ```php
+  // run with PACKAGES_FORCE_ALL=false
+  visit('/dashboard')->assertNoJavaScriptErrors()->assertDontSee('Billing');
+  ```
+
+  Blade slots: assert the response HTML of the host page against the version rendered with an empty `ViewSlots` (`app()->instance(ViewSlots::class, new ViewSlots)`).
 
 ## 5. Inertia package pages
 
@@ -144,7 +153,7 @@ Run both switches.
 3. `PACKAGES_FORCE_ALL=false php artisan test --testsuite=Core` must pass.
 4. The UI is clean: no slot contribution, no menu entry, no Filament resource or widget.
 
-**Product switch** (on a throwaway branch or in CI). Run `composer remove packages/<name>`, then:
+**Product switch** (on a throwaway branch or in CI). Run `composer remove packages/<name>` and delete `packages/<name>/` (the `packages/*` globs of Vite, test suite and arch tests would still find a folder left on disk), then:
 
 1. `php artisan test --testsuite=Core` must pass.
 2. The frontend type check and `npm run build` must pass.

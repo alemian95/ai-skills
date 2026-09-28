@@ -17,7 +17,7 @@ These are internal packages in a monorepo, not packages published to their own r
 
 | Switch | Where | Decides |
 |---|---|---|
-| Product | `composer require` / `composer remove` of the path package | whether the code ships in the artifact |
+| Product | the `packages/<name>/` folder + its `composer require` (removal = `composer remove` **and** deleting the folder) | whether the code ships in the artifact |
 | Instance | `<NAME>_ENABLED` in the instance `.env`, read from `config/<name>.php` → `enabled` | whether that customer's instance registers it |
 
 Default is `false`. A disabled package has the same observable effect as a removed one: no routes, no migrations, no listeners, no contributions, no UI. Its files stay on disk and its frontend chunks stay in the bundle, but nothing can reach them.
@@ -67,7 +67,7 @@ A core change is acceptable only if it is **essential** (without it something do
 |---|---|
 | Gate only in `boot()` while `register()` binds/tags | The base provider gates both; never override `register()`/`boot()` |
 | Package migration adds a column to a core table | Package tables only; if the core really needs a column, the core adds it, with a generic name |
-| `Inertia::share` with package data | Share only the enabled-package list (done once by the core); data comes from package endpoints, deferred props or slot context props |
+| `Inertia::share` with package data | Share only the enabled-package list (done once by the core); slot contributions get data from the package's own endpoint plus the context props the host passes; package pages from their own props |
 | Build fails on an instance where the package is off | Wayfinder generates with `PACKAGES_FORCE_ALL=true` at build time |
 | `Unable to locate file in Vite manifest` for `<name>::page` | The Blade `@vite` per-page entry must skip `::` pages |
 | Listeners never fire | Event discovery doesn't scan `packages/`: register listeners in `bootPackage()` |

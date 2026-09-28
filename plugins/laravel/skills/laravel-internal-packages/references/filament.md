@@ -85,6 +85,8 @@ Rules:
 
 - **Authorization.** Register policies explicitly with `Gate::policy()` in `bootPackage()`. Every resource, page and widget of the package enforces its own access (`canAccess()`, `canView()`, policies). Security belongs to the package.
 - **Core resources are not edited for a package.** Add to a core page through a render hook. If you need to add a column or action to a core resource table, the core resource must first expose a generic contribution registry (see `backend.md` → *Contribution registries*): same shape, same append-only rule, same neutrality test.
+- **Filament `Exporter` / `Importer`** have static `getColumns()` and run queued, so constructor injection doesn't apply. The registry keeps the same shape, but contributors return `list<ExportColumn>` and the core exporter appends them at the end of `getColumns()` from `app()->tagged(self::CONTRIBUTORS)`. Queued jobs boot the app, so the package gate applies there too.
+- **Custom dashboard.** Plugin `->widgets()` appear on the default `Dashboard`. If the core overrides `getWidgets()`, package widgets disappear without any error. The core dashboard must merge the panel's widgets (`Filament::getWidgets()`) into its own.
 - **Livewire components** used inside package Filament pages are registered like any package Livewire component (`blade-livewire.md`).
 - **Caches.** If the deploy caches Filament components (`filament:optimize` / `php artisan optimize`), rebuild the cache after toggling a package flag, together with `config:cache`.
 - **Verify on the installed version.** Check the plugin, render hook and panel APIs against the installed Filament docs (Boost `search-docs` if available) before writing them: hook names and discovery signatures change between major versions.

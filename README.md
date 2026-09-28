@@ -19,7 +19,7 @@ Update: `/plugin marketplace update ai-skills`.
 |---|---|
 | `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (Nygard-format ADRs) |
 | `php` | skill `modern-php` (modern PHP 8.4+) · skill `php-shared-hosting` (shared hosting without SSH, FTP deploy) |
-| `laravel` | skill `laravel-action-vs-service` · command `/laravel:migrate-ziggy-to-wayfinder` |
+| `laravel` | skill `laravel-action-vs-service` · skill `laravel-internal-packages` (optional features as in-repo packages the core never names; Inertia React/Vue/Svelte, Blade, Livewire, Filament) · command `/laravel:migrate-ziggy-to-wayfinder` |
 
 ## CLAUDE.md snippets
 

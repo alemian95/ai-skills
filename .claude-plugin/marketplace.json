@@ -20,7 +20,7 @@
     {
       "name": "laravel",
       "source": "./plugins/laravel",
-      "description": "Laravel architecture (Action vs Service) and Ziggy to Wayfinder migration."
+      "description": "Laravel architecture (Action vs Service, internal packages) and Ziggy to Wayfinder migration."
     }
   ]
 }

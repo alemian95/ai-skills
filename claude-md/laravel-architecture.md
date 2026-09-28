@@ -85,6 +85,8 @@ Rules for modules:
 - The core does not depend on modules: modules hook into the core through events, listeners and bindings in their own Service Provider.
 - Do not create a module for an area with two classes: the structure follows the real domain, not the anticipated one.
 
+A module lives in `app/` and is always present. An **optional** feature (sold separately, enabled per instance, removable) is something else: it becomes an internal package under `packages/` that the core never names. Use the `laravel-internal-packages` skill, if installed.
+
 ## Frontend (React + TypeScript)
 
 - **Small, pure components**: they receive props and render UI. Non-trivial logic (derived state, side-effects, fetching, complex forms) goes into custom hooks or utility functions that can be tested without rendering.

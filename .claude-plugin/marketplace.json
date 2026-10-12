@@ -21,6 +21,11 @@
       "name": "laravel",
       "source": "./plugins/laravel",
       "description": "Laravel architecture (layers, modules, framework components, Action vs Service, internal packages) and Ziggy to Wayfinder migration."
+    },
+    {
+      "name": "cost",
+      "source": "./plugins/cost",
+      "description": "Shows the session's API-equivalent cost (USD, list price) in the status line, even on a subscription plan."
     }
   ]
 }

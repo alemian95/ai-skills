@@ -9,6 +9,7 @@ Plugin marketplace for [Claude Code](https://code.claude.com): skills, commands 
 /plugin install engineering@ai-skills
 /plugin install php@ai-skills
 /plugin install laravel@ai-skills
+/plugin install cost@ai-skills
 ```
 
 Update: `/plugin marketplace update ai-skills`.
@@ -20,6 +21,7 @@ Update: `/plugin marketplace update ai-skills`.
 | `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (Nygard-format ADRs) |
 | `php` | skill `modern-php` (modern PHP 8.4+) · skill `php-shared-hosting` (shared hosting without SSH, FTP deploy) |
 | `laravel` | skill `laravel-architecture` (layers, modules, best practices per framework component; complements Laravel Boost) · skill `laravel-action-vs-service` · skill `laravel-internal-packages` (optional features as in-repo packages the core never names; Inertia React/Vue/Svelte, Blade, Livewire, Filament) · command `/laravel:migrate-ziggy-to-wayfinder` |
+| `cost` | mod: the session's API-equivalent cost (e.g. `$1.26`, list price, as `/cost` totals it) in the status line, also on a subscription plan |
 
 ## CLAUDE.md snippets
 
@@ -37,6 +39,7 @@ plugins/<plugin>/
   skills/<skill>/SKILL.md           # skill, with optional references/ and assets/
   commands/<command>.md             # slash command
   agents/<agent>.md                 # subagent
+  hooks/hooks.json, hooks/*.ts      # mod: hooks module, with *.test.ts (`claude plugin test plugins/<plugin>`)
 ```
 
 To add something, create the file in the right folder of an existing plugin and bump `version` in its `plugin.json`. A new plugin must also be registered in `marketplace.json`.

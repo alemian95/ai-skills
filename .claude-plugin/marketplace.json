@@ -25,7 +25,7 @@
     {
       "name": "cost",
       "source": "./plugins/cost",
-      "description": "Shows the session's API-equivalent cost (USD, list price) in the status line, even on a subscription plan."
+      "description": "Shows the session's API-equivalent cost (USD, list price) above the prompt, with a per-model cost breakdown on click, even on a subscription plan."
     }
   ]
 }

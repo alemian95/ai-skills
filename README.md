@@ -21,7 +21,7 @@ Update: `/plugin marketplace update ai-skills`.
 | `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (Nygard-format ADRs) |
 | `php` | skill `modern-php` (modern PHP 8.4+) · skill `php-shared-hosting` (shared hosting without SSH, FTP deploy) |
 | `laravel` | skill `laravel-architecture` (layers, modules, best practices per framework component; complements Laravel Boost) · skill `laravel-action-vs-service` · skill `laravel-internal-packages` (optional features as in-repo packages the core never names; Inertia React/Vue/Svelte, Blade, Livewire, Filament) · command `/laravel:migrate-ziggy-to-wayfinder` |
-| `cost` | mod: the session's API-equivalent cost (e.g. `$1.26`, list price, as `/cost` totals it) in the status line, also on a subscription plan |
+| `cost` | mod: the session's API-equivalent cost (e.g. `$1.26`, list price, as `/cost` totals it) above the prompt, also on a subscription plan; click it for cost and tokens per model (subagents apart), estimated from a list-price table in `hooks/prices.ts` |
 
 ## CLAUDE.md snippets
 

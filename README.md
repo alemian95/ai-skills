@@ -10,6 +10,7 @@ Plugin marketplace for [Claude Code](https://code.claude.com): skills, commands 
 /plugin install php@ai-skills
 /plugin install laravel@ai-skills
 /plugin install cost@ai-skills
+/plugin install guardrails@ai-skills
 ```
 
 Update: `/plugin marketplace update ai-skills`.
@@ -22,6 +23,7 @@ Update: `/plugin marketplace update ai-skills`.
 | `php` | skill `modern-php` (modern PHP 8.4+) · skill `php-shared-hosting` (shared hosting without SSH, FTP deploy) |
 | `laravel` | skill `laravel-architecture` (layers, modules, best practices per framework component; complements Laravel Boost) · skill `laravel-action-vs-service` · skill `laravel-internal-packages` (optional features as in-repo packages the core never names; Inertia React/Vue/Svelte, Blade, Livewire, Filament) · command `/laravel:migrate-ziggy-to-wayfinder` |
 | `cost` | mod: the session's API-equivalent cost (e.g. `$1.26`, list price, as `/cost` totals it) above the prompt, also on a subscription plan; click it for cost and tokens per model (subagents apart), estimated from a list-price table in `hooks/prices.ts` |
+| `guardrails` | mod: `/git-lock on\|off\|status` blocks git and `gh` writes in that project (kept across sessions) · denies edits to migrations already in git, asks before new migrations and seeder changes · asks before `migrate:fresh/reset/rollback/refresh`, `db:wipe`, `DROP`/`TRUNCATE` and `rm -rf` outside the project |
 
 ## CLAUDE.md snippets
 

@@ -1,0 +1,8 @@
+{
+  "name": "guardrails",
+  "version": "0.1.0",
+  "description": "Blocks git writes in projects you lock with /git-lock, protects migrations already in git, and asks before destructive database and file commands.",
+  "author": {
+    "name": "Alessandro Mian"
+  }
+}

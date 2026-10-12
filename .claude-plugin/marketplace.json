@@ -26,6 +26,11 @@
       "name": "cost",
       "source": "./plugins/cost",
       "description": "Shows the session's API-equivalent cost (USD, list price) above the prompt, with a per-model cost breakdown on click, even on a subscription plan."
+    },
+    {
+      "name": "guardrails",
+      "source": "./plugins/guardrails",
+      "description": "Blocks git writes in projects you lock with /git-lock, protects migrations already in git, and asks before destructive database and file commands."
     }
   ]
 }

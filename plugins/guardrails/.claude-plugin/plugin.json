@@ -1,6 +1,6 @@
 {
   "name": "guardrails",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "description": "Blocks git writes in projects you lock with /git-lock, protects migrations already in git, and asks before destructive database and file commands, writes to protected branches, git remote operations, deploys and publishes.",
   "author": {
     "name": "Alessandro Mian"

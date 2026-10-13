@@ -3,7 +3,8 @@ export type Verdict = { decision: 'ask' | 'deny'; reason: string }
 // A git subcommand ends at whitespace or the end of the command, so `merge-base` or `commit-graph` are not `merge` or `commit`.
 const END = '(?![\\w-])'
 // `git` followed by any global options: `-C <path>`, `-c <key=value>`, `--git-dir <path>`, `--no-pager`, `--work-tree=<path>`...
-const GIT = '\\bgit(?:\\s+(?:-[Cc]\\s+\\S+|--(?:git-dir|work-tree|namespace)\\s+\\S+|--[\\w-]+(?:=\\S+)?))*\\s+'
+const GIT_OPTIONS = '(?:\\s+(?:-[Cc]\\s+\\S+|--(?:git-dir|work-tree|namespace)\\s+\\S+|--[\\w-]+(?:=\\S+)?))*'
+const GIT = `\\bgit${GIT_OPTIONS}\\s+`
 
 const GIT_WRITE = new RegExp(
   `${GIT}(?:commit|add|push|pull|mv|rm|stash|reset|tag|merge|rebase|cherry-pick|revert|restore|checkout|switch|am|apply)${END}`,
@@ -12,8 +13,9 @@ const GIT_WRITE = new RegExp(
 const GIT_BRANCH_WRITE = new RegExp(`${GIT}branch\\s+(?!(?:-a|-r|-v|-vv|--list|--show-current|--all)\\b)\\S`)
 const GH_WRITE = /\bgh\s+(?:pr\s+(?:create|merge|close|edit)|release\s+(?:create|delete|edit))\b/
 
-// Writes that land on whatever branch is checked out.
-const GIT_BRANCH_SENSITIVE = new RegExp(`${GIT}(?:commit|merge|rebase|cherry-pick)${END}`)
+// Writes that land on whatever branch is checked out; the group holds the global options, where `-C` sets the directory.
+const GIT_BRANCH_SENSITIVE = new RegExp(`\\bgit(${GIT_OPTIONS})\\s+(?:commit|merge|rebase|cherry-pick)${END}`)
+const GLOBAL_C = /-C\s+(\S+)/g
 const GIT_REMOTE = new RegExp(`${GIT}(?:push|fetch|pull|remote\\s+update)${END}`)
 const PROTECTED_BRANCH = /^(?:main|master|develop|stage|staging|prod|production)$/
 const DEPLOY_PUBLISH =
@@ -26,9 +28,10 @@ const DESTRUCTIVE_SQL = /\b(?:DROP|TRUNCATE)\s+(?:TABLE|DATABASE|SCHEMA)\b/i
 const MAKE_SCHEMA = /\bartisan\s+make:(?:migration|seeder)\b/
 const RM_RECURSIVE = /(?:^|[;&|]\s*)rm\s+((?:-\S+\s+)*)(.+)/
 
-// Read-only commands whose arguments are search text, not something that runs.
-const SEARCH = new RegExp(`^\\s*(?:grep|egrep|fgrep|rg|ag|ack|${GIT}(?:log|grep|show|diff))\\b`)
-const GIT_DIR = /\bgit\s+(?:\S+\s+)*?-C\s+(\S+)/
+// Read-only commands whose arguments are search text, not something that runs; `--output` makes git write a file.
+const SEARCH = new RegExp(`^\\s*(?:grep|egrep|fgrep|rg|ag|ack|${GIT}(?:log|grep|show|diff)\\b(?![^\\n]*--output\\b))`)
+// SQL comments: `-- ` (dash dash and a space, unlike a shell `--option`) to the end of the line, and `/* ... */`.
+const SQL_COMMENT = /--(?:\s[^\n]*|$)|\/\*[\s\S]*?\*\//gm
 const LEADING_CD = /^\s*cd\s+(\S+)\s*&&\s*/
 // A path the shell would expand: guardrails cannot tell where it points.
 const SHELL_EXPANDED = /^~|\$|`/
@@ -46,8 +49,9 @@ const runnable = (command: string): string =>
   command.split(SEPARATOR).map(part => (SEARCH.test(part) ? '' : part)).join('')
 
 // SQL statements end at `;`, not at a newline: `DELETE FROM t` and its `WHERE` may sit on separate lines.
+// ponytail: a WHERE inside a string literal still counts; enough for a confirmation prompt.
 const hasUnboundedDelete = (command: string): boolean =>
-  command.split(/;|&&|\|\|?/).some(s => DELETE_FROM.test(s) && !WHERE.test(s))
+  command.split(/;|&&|\|\|?/).some(s => DELETE_FROM.test(s) && !WHERE.test(s.replace(SQL_COMMENT, '')))
 
 /** Whether the verdict on this command may depend on the branch checked out; checkBash decides. */
 export const isBranchSensitive = (command: string): boolean => GIT_BRANCH_SENSITIVE.test(command)
@@ -58,7 +62,7 @@ const resolve = (target: string, base: string): string | null => {
   return path.startsWith('/') ? path : `${base}/${path}`
 }
 
-/** The directory git runs in: leading `cd`s, then `-C`, from the project root; null when a path cannot be resolved. */
+/** The directory the branch-sensitive git command runs in: leading `cd`s, then its global `-C`s, from the project root; null when a path cannot be resolved. */
 export const gitDirectory = (command: string, root: string): string | null => {
   let base: string | null = root
   let rest = command
@@ -66,8 +70,9 @@ export const gitDirectory = (command: string, root: string): string | null => {
     base = resolve(cd[1], base)
     rest = rest.slice(cd[0].length)
   }
-  const dir = GIT_DIR.exec(rest)?.[1]
-  return base === null || dir === undefined ? base : resolve(dir, base)
+  const options = GIT_BRANCH_SENSITIVE.exec(rest)?.[1] ?? ''
+  for (const [, dir] of options.matchAll(GLOBAL_C)) base = base === null ? null : resolve(dir, base)
+  return base
 }
 
 export const isGitWrite = (command: string): boolean =>

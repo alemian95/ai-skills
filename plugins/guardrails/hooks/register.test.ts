@@ -75,6 +75,13 @@ test('writes to protected branches, remote, deploy and unbounded deletes ask', (
   // A search on the first line does not hide the commands on the next ones.
   expect(checkBash('git log -1\ngit commit -m x', ROOT, true)?.decision).toBe('deny')
   expect(checkBash('grep -rn x app\ngit push', ROOT, false)?.decision).toBe('ask')
+  // A WHERE inside an SQL comment does not bound the DELETE; a shell `--option` is not a comment.
+  expect(checkBash('mysql -e "DELETE FROM users -- WHERE later"', ROOT, false)?.decision).toBe('ask')
+  expect(checkBash('mysql -e "DELETE FROM users /* WHERE */"', ROOT, false)?.decision).toBe('ask')
+  expect(checkBash('mysql --execute="DELETE FROM users WHERE id = 1"', ROOT, false)).toBeUndefined()
+  // `--output` makes git write a file, so the statement is checked like any other.
+  expect(checkBash('git log --grep "npm publish"', ROOT, false)).toBeUndefined()
+  expect(checkBash('git log --output=out.txt --grep "npm publish"', ROOT, false)?.decision).toBe('ask')
   // A multi-line SQL statement keeps its WHERE.
   expect(checkBash('mysql <<SQL\nDELETE FROM users\nWHERE id = 1;\nSQL', ROOT, false)).toBeUndefined()
 
@@ -99,6 +106,11 @@ test('git runs where -C or a leading cd points', () => {
   expect(gitDirectory('cd a && cd b && git commit -m x', ROOT)).toBe(`${ROOT}/a/b`)
   expect(gitDirectory('cd ~/proj && git commit -m x', ROOT)).toBeNull()
   expect(gitDirectory('git -C "$APP" commit -m x', ROOT)).toBeNull()
+  // Only git's global -C sets the directory: not `commit -C <commit>`, `log -C`, or text in a message.
+  expect(gitDirectory('git commit -C HEAD', ROOT)).toBe(ROOT)
+  expect(gitDirectory('git log -C && git commit -m x', ROOT)).toBe(ROOT)
+  expect(gitDirectory('git commit -m "handle -C flag"', ROOT)).toBe(ROOT)
+  expect(gitDirectory('git -C a -C b commit -m x', ROOT)).toBe(`${ROOT}/a/b`)
 })
 
 test('migrations in git are denied, new ones and seeders ask', () => {

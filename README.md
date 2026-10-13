@@ -13,7 +13,7 @@ Plugin marketplace for [Claude Code](https://code.claude.com): skills, commands 
 /plugin install guardrails@ai-skills
 ```
 
-Update: `/plugin marketplace update ai-skills`.
+Update: `/plugin marketplace update ai-skills`, then `/plugin update <plugin>@ai-skills` for each installed plugin (refreshing the marketplace does not update the installed plugins).
 
 Pre-release: pick a tag from the [releases](https://github.com/alemian95/ai-skills/releases), add `"ref": "<tag>"` to the `source` of `ai-skills` under `extraKnownMarketplaces` in `~/.claude/settings.json` (`/plugin marketplace add` declares it there), then:
 

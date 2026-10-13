@@ -50,7 +50,7 @@ Architectural choices for each component. Syntax, signatures and version-specifi
 
 ## Action
 
-Detailed boundary with Services, Events and Jobs: `laravel-action-vs-service`. Architectural points:
+Detailed boundary with Services, Events and Jobs: [action-vs-service.md](action-vs-service.md). Architectural points:
 
 - Order inside the Action: **guards** (throw domain exception) → **transaction** (writes) → **events** after commit → typed return.
 - **Essential external calls** (charge, refund) are never made inside an open transaction that could still roll back, and never left to a fire-and-forget listener. Pick one order and make the failure explicit: call first and write only on success; or write a pending state, commit, call, then mark done/failed with a retryable Job. Never a state where the DB says "refunded" and the provider did not refund.

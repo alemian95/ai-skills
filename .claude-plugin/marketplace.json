@@ -10,17 +10,17 @@
     {
       "name": "engineering",
       "source": "./plugins/engineering",
-      "description": "Design principles (SOLID, DRY, YAGNI, SSOT) and ADR writing."
+      "description": "Design principles (SOLID, DRY, YAGNI, SSOT), ADR writing, and a developer agent with clean-code preloaded."
     },
     {
       "name": "php",
       "source": "./plugins/php",
-      "description": "Modern PHP 8.4+ and PHP projects for shared hosting."
+      "description": "Modern PHP 8.4+, PHP projects for shared hosting, and a php-developer agent with clean-code and modern-php preloaded."
     },
     {
       "name": "laravel",
       "source": "./plugins/laravel",
-      "description": "Laravel architecture (layers, modules, framework components, Action vs Service, internal packages) and Ziggy to Wayfinder migration."
+      "description": "Laravel architecture (layers, modules, framework components, Action vs Service, internal packages), Ziggy to Wayfinder migration, and a laravel-developer agent with clean-code, modern-php and laravel-architecture preloaded."
     },
     {
       "name": "cost",
@@ -30,7 +30,7 @@
     {
       "name": "guardrails",
       "source": "./plugins/guardrails",
-      "description": "Blocks git writes in projects you lock with /git-lock, protects migrations already in git, and asks before destructive database and file commands."
+      "description": "Blocks git writes in projects you lock with /git-lock, protects migrations already in git, and asks before destructive database and file commands, writes to protected branches, git remote operations, deploys and publishes."
     }
   ]
 }

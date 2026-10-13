@@ -1,6 +1,6 @@
 ---
 name: laravel-architecture
-description: Use when defining, reviewing or refactoring the architecture of a Laravel application (optionally with React/TypeScript via Inertia) — deciding where logic, data or a domain rule belongs, how to organize folders, functional areas and bounded-context modules, which framework component fits a job (Form Request, Policy, Middleware, Action, Service, DTO, Value Object, Enum, Model, scope or custom Builder, Observer, Event, Listener, Job, Command, Resource, Service Provider, exception), or when code shows fat controllers, business logic in models or observers, authorization repeated in several places, magic strings instead of Enums, missing transactions, side-effects fired before commit, modules reaching into each other's models, or hand-written URLs in the frontend. Complements Laravel Boost, does not replace it.
+description: Use when defining, reviewing or refactoring the architecture of a Laravel application (optionally with React/TypeScript via Inertia) — deciding where logic, data or a domain rule belongs, how to organize folders, functional areas and bounded-context modules, which framework component fits a job (Form Request, Policy, Middleware, Action, Service, DTO, Value Object, Enum, Model, scope or custom Builder, Observer, Event, Listener, Job, Command, Resource, Service Provider, exception), or when adding a POST/PUT/DELETE endpoint or multi-step business logic, or when the user mentions "action" or "service" even in passing, or when code shows fat controllers, controllers calling Eloquent or an external SDK directly, business logic duplicated across endpoints, business logic in models or observers, authorization repeated in several places, magic strings instead of Enums, missing transactions, side-effects fired before commit, modules reaching into each other's models, or hand-written URLs in the frontend. Complements Laravel Boost, does not replace it.
 ---
 
 # Laravel architecture
@@ -12,9 +12,10 @@ This skill decides **where** logic lives and **how** responsibilities are split.
 If the two seem to conflict, Boost wins on "how it is written" and this skill wins on "where it goes". If the conflict persists, stop and ask. Do not restate Boost rules here or in the code review: a rule written in two places diverges.
 
 Related skills, if installed:
-- `laravel-action-vs-service`: detailed boundary between Action, Service, Event/Listener and Job.
 - `laravel-internal-packages`: optional features as internal packages under `packages/`.
 - `engineering:clean-code`: SOLID, DRY, YAGNI, SSOT in general.
+
+Where business logic goes between Controller, Action, Service, Event/Listener and Job, with the Action contract and the checklist for a new endpoint: [references/action-vs-service.md](references/action-vs-service.md). Read it when you add or move business logic.
 
 Best practices component by component (Controller, Form Request, Policy, Model, Observer, Job, Exception, Service Provider...): [references/components.md](references/components.md). Read it when you create, use or review a specific component.
 
@@ -57,13 +58,13 @@ Best practices component by component (Controller, Form Request, Policy, Model, 
 | Observer | Persistence invariants of the model (uuid, slug, denormalized counters) | Trigger business side-effects |
 | Resource | Shape of the output, API or Inertia props | Run queries or domain logic |
 
-For uncertain cases between Action, Service, Event and Job, use `laravel-action-vs-service`.
+For uncertain cases between Action, Service, Event and Job, read [references/action-vs-service.md](references/action-vs-service.md).
 
 ### Rules
 
 - **Typed input and output.** Actions receive a DTO (`readonly` class, or `spatie/laravel-data` if already installed) or typed parameters, never `$request->all()`, and return a precise type. The HTTP layer builds the DTO (e.g. `$request->toData()` on the Form Request); the DTO does not know `Request`.
 - **Guards first.** The Action checks domain invariants before writing anything and throws a dedicated domain exception (`OrderException::cannotBeCancelled($order)`), calling the same predicate the Policy uses.
-- **Action shape** (public method, interface, naming) follows `laravel-action-vs-service`; this skill does not redefine it.
+- **Action shape** (public method, interface, naming) follows [references/action-vs-service.md](references/action-vs-service.md); it is not redefined here.
 - **Explicit transactions.** An operation that writes to multiple tables runs in `DB::transaction()` inside the Action. Events that produce external side-effects fire after commit (`ShouldDispatchAfterCommit` or `afterCommit()`).
 - **Essential vs optional side-effects.** An external call the operation cannot be correct without (charge, refund, reserving stock at a supplier) is a step of the Action, through its Contract, with an explicit failure path ([components](references/components.md#action)). An optional one (email, analytics, CRM sync) is a queued listener: if it fails, the operation still stands.
 - **Contracts.** An interface is introduced when:

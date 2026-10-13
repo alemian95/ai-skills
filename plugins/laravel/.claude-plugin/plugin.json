@@ -1,8 +1,12 @@
 {
   "name": "laravel",
-  "version": "1.3.0",
-  "description": "Laravel architecture (layers, modules, framework components, Action vs Service, internal packages) and Ziggy to Wayfinder migration.",
+  "version": "2.0.0-beta.1",
+  "description": "Laravel architecture (layers, modules, framework components, Action vs Service, internal packages), Ziggy to Wayfinder migration, and a laravel-developer agent with clean-code, modern-php and laravel-architecture preloaded.",
   "author": {
     "name": "Alessandro Mian"
-  }
+  },
+  "dependencies": [
+    "engineering",
+    "php"
+  ]
 }

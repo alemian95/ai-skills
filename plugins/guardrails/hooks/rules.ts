@@ -70,7 +70,8 @@ export const gitDirectory = (command: string, root: string): string | null => {
     base = resolve(cd[1], base)
     rest = rest.slice(cd[0].length)
   }
-  const options = GIT_BRANCH_SENSITIVE.exec(rest)?.[1] ?? ''
+  const statement = rest.split(SEPARATOR).find(part => !SEARCH.test(part) && GIT_BRANCH_SENSITIVE.test(part))
+  const options = statement === undefined ? '' : (GIT_BRANCH_SENSITIVE.exec(statement)?.[1] ?? '')
   for (const [, dir] of options.matchAll(GLOBAL_C)) base = base === null ? null : resolve(dir, base)
   return base
 }

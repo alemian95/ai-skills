@@ -111,6 +111,7 @@ test('git runs where -C or a leading cd points', () => {
   expect(gitDirectory('git log -C && git commit -m x', ROOT)).toBe(ROOT)
   expect(gitDirectory('git commit -m "handle -C flag"', ROOT)).toBe(ROOT)
   expect(gitDirectory('git -C a -C b commit -m x', ROOT)).toBe(`${ROOT}/a/b`)
+  expect(gitDirectory('grep -rn "git -C vendor commit" docs && git commit -m x', ROOT)).toBe(ROOT)
 })
 
 test('migrations in git are denied, new ones and seeders ask', () => {

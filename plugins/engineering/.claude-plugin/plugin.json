@@ -1,6 +1,6 @@
 {
   "name": "engineering",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "Design principles (SOLID, DRY, YAGNI, SSOT), ADR writing, and a developer agent with clean-code preloaded.",
   "author": {
     "name": "Alessandro Mian"

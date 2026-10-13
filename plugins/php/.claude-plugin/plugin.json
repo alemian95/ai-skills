@@ -1,6 +1,6 @@
 {
   "name": "php",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "Modern PHP 8.4+, PHP projects for shared hosting, and a php-developer agent with clean-code and modern-php preloaded.",
   "author": {
     "name": "Alessandro Mian"

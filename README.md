@@ -15,7 +15,7 @@ Plugin marketplace for [Claude Code](https://code.claude.com): skills, commands 
 
 Update: `/plugin marketplace update ai-skills`.
 
-Pre-release: add the marketplace pinned to its tag instead, e.g. `/plugin marketplace add alemian95/ai-skills#v2.0.0-beta.1` (remove the stable `ai-skills` marketplace first: both share the name).
+Pre-release: pin the marketplace to a tag from the [releases](https://github.com/alemian95/ai-skills/releases), e.g. `/plugin marketplace add alemian95/ai-skills#<tag>`. Stable and pre-release share the name `ai-skills`: remove the stable marketplace first, or, if `ai-skills` is declared in `extraKnownMarketplaces` in your settings, add `"ref": "<tag>"` to its `source` instead. Then `/plugin marketplace update ai-skills` and update the installed plugins. Remove the `ref` to go back to stable.
 
 ## What's new in 2.0
 

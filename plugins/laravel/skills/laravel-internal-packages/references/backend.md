@@ -306,4 +306,4 @@ A package never adds a global share of its data.
 
 ## Inside a package
 
-The package's internal design follows the core's rules (Actions, Services, Policies: see the `laravel-action-vs-service` skill). When a package grows a real domain, split a `Domain/` layer that never uses `App\` from an `Adapters/` layer that translates to the core, and enforce the split with an arch test. Don't start with that split for a package of ten classes.
+The package's internal design follows the core's rules (Actions, Services, Policies: see the `laravel-architecture` skill). When a package grows a real domain, split a `Domain/` layer that never uses `App\` from an `Adapters/` layer that translates to the core, and enforce the split with an arch test. Don't start with that split for a package of ten classes.

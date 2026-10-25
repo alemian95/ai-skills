@@ -1,6 +1,6 @@
-import type { Register } from 'claude-code'
+import type { EngineInterface, Register } from 'claude-code'
 
-import { MIGRATION, checkBash, checkFileWrite } from './rules'
+import { MIGRATION, checkBash, checkFileWrite, gitDirectory, isBranchSensitive } from './rules'
 
 const LOCKED = 'gitLocked'
 const FILE_TOOLS = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'] as const
@@ -10,7 +10,15 @@ const FAIL_SAFE = { decision: 'ask', reason: 'guardrails could not check this ca
 const asRoots = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : []
 
+// null when the branch cannot be read: an unresolved path or a git error. A detached HEAD reads as ''.
+const currentBranch = async ($: EngineInterface, cwd: string | null): Promise<string | null> => {
+  if (cwd === null) return null
+  const result = await $.process.run(['git', 'branch', '--show-current'], { cwd })
+  return result.exitCode === 0 ? result.stdout.trim() : null
+}
+
 export const register: Register = on => {
+
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'git-lock',
@@ -36,7 +44,8 @@ export const register: Register = on => {
     const { command } = e.input as { command?: unknown }
     if (typeof command !== 'string') return next(e)
     const root = await $.session.root()
-    const verdict = checkBash(command, root, (asRoots(await $.store.get(LOCKED))).includes(root))
+    const branch = isBranchSensitive(command) ? await currentBranch($, gitDirectory(command, root)) : undefined
+    const verdict = checkBash(command, root, (asRoots(await $.store.get(LOCKED))).includes(root), branch)
     return verdict ?? next(e)
   }).catch(() => FAIL_SAFE)
 

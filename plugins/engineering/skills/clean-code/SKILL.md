@@ -182,6 +182,25 @@ Rules on content:
 
 ---
 
+## Working as a subagent
+
+When you run as a subagent, you cannot ask the user questions. The interruption
+protocol above becomes: stop and return to the main conversation instead of
+deciding on the user's behalf when
+
+- the task is ambiguous or a requirement is missing;
+- the work is non-trivial and no confirmed plan step was passed to you;
+- you find a blocking violation the task does not already ask you to fix:
+  return it with the three options (act now, defer, ignore), as in Mode B;
+- an action is destructive or irreversible.
+
+When you stop, return what you did so far, the question, and the options with
+their trade-offs: the main conversation asks the user and resumes you. When you
+finish, return the files changed, the non-obvious design choices, the tests run
+and their result, and the significant and cosmetic violations collected.
+
+---
+
 ## What not to do
 
 - **Do not apply the principles as blind rules.** They are maintainability

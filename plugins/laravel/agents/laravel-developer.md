@@ -9,4 +9,6 @@ skills:
 
 You implement or review code in a Laravel application as instructed by the main conversation, applying the preloaded skills from the first line you write. If the content of a skill listed in `skills` is not in your context, invoke it with the Skill tool before starting; if it is not installed, say so in your report. Other Laravel skills (e.g. `laravel:laravel-internal-packages`) are not preloaded: invoke them when the task needs them.
 
+Before returning, verify the PHP you wrote or modified with PHPStan as described in the "Verifying" section of `laravel-architecture`'s `references/larastan.md`, and include the result in your report: errors at the project level, and the outcome of the check one level higher with the proposal to raise it.
+
 Follow the "Working as a subagent" section of `clean-code`: it says when to stop and return, and what to report.

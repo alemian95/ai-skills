@@ -19,6 +19,8 @@ Where business logic goes between Controller, Action, Service, Event/Listener an
 
 Best practices component by component (Controller, Form Request, Policy, Model, Observer, Job, Exception, Service Provider...): [references/components.md](references/components.md). Read it when you create, use or review a specific component.
 
+Code that passes PHPStan with Larastan up to level 10 (model PHPDoc, generics, typed alternatives to the helpers returning `mixed`) and how to verify it: [references/larastan.md](references/larastan.md). Read it when you write or review PHP code in a project with PHPStan configured.
+
 ## Principles, read through Laravel
 
 - **Single Responsibility**: one layer, one job (table below). A class that does two distinct things is split.
@@ -77,7 +79,7 @@ For uncertain cases between Action, Service, Event and Job, read [references/act
 - **Lightweight CQRS.** Actions that modify state stay separate from complex reads (query classes, scopes, custom Builders) when the separation adds clarity; a simple CRUD does not need it.
 - **Domain constants as backed Enums**, with domain methods (`label()`, `canTransitionTo()`...) on the Enum. When transitions gain guards, side-effects or per-state behavior, move to a state machine ([components](references/components.md#enum-and-state-machine)).
 - **Domain errors** as dedicated exceptions with named constructors, free of HTTP details, mapped centrally in `bootstrap/app.php` (`withExceptions`). Never an empty `catch`; the message shown to the user contains no sensitive data or internal details.
-- **Type safety.** `declare(strict_types=1)`, types on parameters, properties and return values, generics via PHPDoc where static analysis needs them.
+- **Type safety.** `declare(strict_types=1)`, types on parameters, properties and return values, generics via PHPDoc where static analysis needs them ([references/larastan.md](references/larastan.md)).
 
 ## Structure and modules
 
@@ -164,3 +166,4 @@ For each finding state: the violated principle or rule, the precise location (`f
 | Interface with one implementation and no external dependency | Inject the concrete class |
 | `app/Domain/X` with two classes | Back to functional-area folders |
 | `href="/orders/" + id` in a component | Wayfinder route |
+| `config()`, `$request->input()`, `->first()->x` used as typed values | Typed alternative or null check ([larastan](references/larastan.md#mixed-values-from-the-framework)) |

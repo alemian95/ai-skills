@@ -1,6 +1,6 @@
 ---
 name: laravel-architecture
-description: Use when defining, reviewing or refactoring the architecture of a Laravel application (optionally React/TypeScript via Inertia) — where logic, data or a domain rule belongs, folders, functional areas and bounded-context modules, which framework component fits a job (Form Request, Policy, Middleware, Action, Service, DTO, Value Object, Enum, Model, scope or Builder, Observer, Event, Listener, Job, Command, Resource, Service Provider, exception); when adding a POST/PUT/DELETE endpoint or multi-step business logic, or the user mentions "action" or "service" even in passing; when code shows fat controllers, controllers calling Eloquent or an external SDK, logic duplicated across endpoints or living in models or observers, repeated authorization, magic strings instead of Enums, missing transactions, side-effects fired before commit, modules reaching into each other's models, or hand-written URLs in the frontend. Complements Laravel Boost, does not replace it.
+description: Use when defining, reviewing or refactoring the architecture of a Laravel application (optionally React/TypeScript via Inertia) — where logic, data or a domain rule belongs, folders, functional areas and bounded-context modules, which framework component fits a job (Form Request, Policy, Middleware, Action, Service, DTO, Value Object, Enum, Model, scope or Builder, Observer, Event, Listener, Job, Command, Resource, Service Provider, exception); when adding a POST/PUT/DELETE endpoint or multi-step business logic, or the user mentions "action" or "service" even in passing; when code shows fat controllers, controllers with complex Eloquent queries, transactions or external SDK calls, logic duplicated across endpoints or living in models or observers, repeated authorization, magic strings instead of Enums, missing transactions, side-effects fired before commit, modules reaching into each other's models, or hand-written URLs in the frontend. Complements Laravel Boost, does not replace it.
 ---
 
 # Laravel architecture
@@ -48,7 +48,7 @@ Code that passes PHPStan with Larastan up to level 10 (model PHPDoc, generics, t
 | Layer | Responsibility | Must not |
 |---|---|---|
 | Route / Middleware | Binding, cross-cutting HTTP concerns (auth, locale, tenant, throttling) | Contain domain rules |
-| Controller | Receives the request, delegates, returns the response | Contain business logic, complex Eloquent queries, SDK calls |
+| Controller | Receives the request, delegates to an Action or, for a simple CRUD step, calls Eloquent directly; returns the response | Contain business logic, transactions, complex or reused Eloquent queries, SDK calls |
 | Form Request | Input validation, authorization delegated to the Policy, mapping to the DTO | Write to the DB, contain domain logic |
 | Action | A complete, context-free business operation (HTTP, console, Job call it the same way) | Know about `Request`, session or response |
 | Service | Pure logic reused by 2+ callers, or a wrapper around an external dependency | Orchestrate a use case (that is the Action's job) |
@@ -60,7 +60,7 @@ Code that passes PHPStan with Larastan up to level 10 (model PHPDoc, generics, t
 | Observer | Persistence invariants of the model (uuid, slug, denormalized counters) | Trigger business side-effects |
 | Resource | Shape of the output, API or Inertia props | Run queries or domain logic |
 
-For uncertain cases between Action, Service, Event and Job, read [references/action-vs-service.md](references/action-vs-service.md).
+For uncertain cases between inline Controller code, Action, Service, Event and Job, read [references/action-vs-service.md](references/action-vs-service.md).
 
 ### Rules
 
@@ -154,7 +154,9 @@ For each finding state: the violated principle or rule, the precise location (`f
 
 | Symptom | Where it goes |
 |---|---|
-| `Model::where(...)` chains or `DB::` in a controller | Scope, custom Builder or query class |
+| Complex or reused `Model::where(...)` chains, or `DB::`, in a controller | Scope, custom Builder or query class |
+| Controller writing 2+ models, opening a transaction or checking state | Action |
+| Action that only wraps one `create`/`update`/`delete` with one caller | Inline in the controller |
 | `if ($user->role === 'admin')` in a controller, Resource or React component | Policy; frontend reads a `can` flag |
 | The same state check in Policy, Action and component | One Enum or model predicate, called by all three |
 | Model method that saves, sends mail or calls an API | Action; the side-effect becomes an event |

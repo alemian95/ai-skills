@@ -26,6 +26,7 @@ Architectural choices for each component. Syntax, signatures and version-specifi
 - **Route model binding** instead of manual `findOrFail`. For nested resources use scoped bindings (`scopeBindings()`), so `/users/{user}/posts/{post}` cannot resolve another user's post.
 - **Every route is named**: names are what Wayfinder, redirects and tests refer to.
 - A controller method is roughly: Form Request → DTO → Action → Resource/redirect. Anything after the Action call other than mapping the response belongs in the Action.
+- **Simple CRUD stays in the controller**: one model written with `$request->validated()`, or a simple read with binding, `load()`, scopes and `paginate()`, with one caller and no transaction, external call, event or state guard. The criteria and when to extract an Action are in [action-vs-service](action-vs-service.md#simple-crud-stays-in-the-controller).
 
 ## Form Request
 

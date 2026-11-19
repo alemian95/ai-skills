@@ -10,7 +10,7 @@
     {
       "name": "engineering",
       "source": "./plugins/engineering",
-      "description": "Design principles (SOLID, DRY, YAGNI, SSOT), ADR writing, and a developer agent with clean-code preloaded."
+      "description": "Design principles (SOLID, DRY, YAGNI, SSOT), ADR writing, brainstorming to a project spec, and a developer agent with clean-code preloaded."
     },
     {
       "name": "php",

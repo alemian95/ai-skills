@@ -45,7 +45,7 @@ Use the same source the declaration lists (the `owner/repo` shorthand or the git
 
 | Plugin | Content |
 |---|---|
-| `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (Nygard-format ADRs) · agent `developer` (implements and reviews code with `clean-code` preloaded) |
+| `engineering` | skill `clean-code` (SOLID, DRY, YAGNI, SSOT) · skill `adr-writer` (Nygard-format ADRs) · skill `brainstorming` (from a rough idea to a non-technical project spec, one question at a time, no code) · agent `developer` (implements and reviews code with `clean-code` preloaded) |
 | `php` | skill `modern-php` (modern PHP 8.4+) · skill `php-shared-hosting` (shared hosting without SSH, FTP deploy) · agent `php-developer` (`clean-code` + `modern-php` preloaded). Requires `engineering` |
 | `laravel` | skill `laravel-architecture` (layers, modules, best practices per framework component; complements Laravel Boost) with the Action vs Service boundary and Larastan up to level 10 as references · skill `laravel-internal-packages` (optional features as in-repo packages the core never names; Inertia React/Vue/Svelte, Blade, Livewire, Filament) · skill `/laravel:migrate-ziggy-to-wayfinder` (one reference per phase) · agent `laravel-developer` (`clean-code` + `modern-php` + `laravel-architecture` preloaded; verifies with PHPStan at the project level and proposes raising it). Requires `engineering` and `php` |
 | `cost` | mod: the session's API-equivalent cost (e.g. `$1.26`, list price, as `/cost` totals it) above the prompt, also on a subscription plan; click it for cost and tokens per model (subagents apart), estimated from a list-price table in `hooks/prices.ts` |

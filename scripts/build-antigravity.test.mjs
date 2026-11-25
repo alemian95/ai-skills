@@ -39,6 +39,11 @@ test('toAntigravityAgent rewrites frontmatter and Claude-only instructions', () 
   assert.match(body, /are not preloaded: read their `SKILL\.md` with `view_file` when the project needs them/);
 });
 
+test('toAntigravityAgent handles CRLF line endings', () => {
+  const crlfAgent = claudeAgent.replaceAll('\n', '\r\n');
+  assert.equal(toAntigravityAgent(crlfAgent, known), toAntigravityAgent(claudeAgent, known));
+});
+
 test('toAntigravityAgent fails when the Skill tool sentence changed in the source', () => {
   assert.throws(() => toAntigravityAgent(claudeAgent.replace('invoke it with the Skill tool', 'use the Skill tool'), known), /Skill tool sentence not found/);
 });

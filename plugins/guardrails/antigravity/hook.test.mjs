@@ -49,6 +49,8 @@ test('migrations in git are denied, new ones and seeders ask, other files pass',
   assert.equal(decide(write(migration, 'replace_file_content'), deps({ isTracked: () => true }))?.decision, 'deny');
   assert.equal(decide(write(migration), deps())?.decision, 'ask');
   assert.equal(decide(write(`${ROOT}/database/seeders/UserSeeder.php`, 'multi_replace_file_content'), deps())?.decision, 'ask');
+  assert.equal(decide({ toolCall: { name: 'edit_file', args: { Path: migration } }, workspacePaths: [ROOT] }, deps({ isTracked: () => true }))?.decision, 'deny');
+  assert.equal(decide({ toolCall: { name: 'write_file', args: { Path: migration } }, workspacePaths: [ROOT] }, deps())?.decision, 'ask');
   assert.equal(decide(write(`${ROOT}/app/Models/User.php`), deps()), undefined);
 });
 

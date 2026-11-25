@@ -20,7 +20,7 @@ const HOOKS = {
   guardrails: {
     PreToolUse: [
       {
-        matcher: 'run_command|write_to_file|replace_file_content|multi_replace_file_content',
+        matcher: 'run_command|write_to_file|replace_file_content|multi_replace_file_content|write_file|edit_file',
         hooks: [{ type: 'command', command: 'node ./scripts/guardrails/hook.mjs', timeout: 10 }],
       },
     ],
@@ -30,7 +30,7 @@ const HOOKS = {
 const MANIFEST = {
   name: 'ai-skills',
   displayName: 'AI Skills',
-  version: '1.0.0', // bump on every change to the generated content
+  version: '1.0.1', // bump on every change to the generated content
   description:
     'Design principles (SOLID, DRY, YAGNI, SSOT), ADR writing, brainstorming, modern PHP 8.4+, PHP on shared hosting, Laravel architecture, developer subagents with the rules preloaded, and guardrails hooks for git, database and deploy commands.',
   author: { name: 'Alessandro Mian' },
@@ -40,12 +40,15 @@ const MANIFEST = {
 // Without an explicit list the default is ambiguous in the docs (all tools vs none).
 export const SUBAGENT_TOOLS = [
   'view_file',
+  'read_file',
   'list_dir',
   'find_by_name',
   'grep_search',
   'write_to_file',
   'replace_file_content',
   'multi_replace_file_content',
+  'write_file',
+  'edit_file',
   'run_command',
   'manage_task',
   'search_web',
@@ -65,7 +68,7 @@ export function unqualify(text, knownIds) {
 
 /** Converts a Claude Code agent into an Antigravity subagent. Throws if a Claude-only instruction survives. */
 export function toAntigravityAgent(source, knownIds) {
-  const parts = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(source);
+  const parts = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(source.replaceAll('\r\n', '\n'));
   if (!parts) throw new Error('agent without frontmatter');
   let [, frontmatter, body] = parts;
 
@@ -160,12 +163,14 @@ export function build(outDir) {
 /** Lists the paths that differ between two trees (missing on either side or with different content). */
 export function diffTrees(expectedDir, actualDir) {
   const read = (dir) =>
-    existsSync(dir) ? new Map(filesUnder(dir).map((file) => [relative(dir, file), readFileSync(file)])) : new Map();
+    existsSync(dir)
+      ? new Map(filesUnder(dir).map((file) => [relative(dir, file), readFileSync(file, 'utf8').replaceAll('\r\n', '\n')]))
+      : new Map();
   const expected = read(expectedDir);
   const actual = read(actualDir);
   const paths = new Set([...expected.keys(), ...actual.keys()]);
   return [...paths]
-    .filter((path) => !expected.has(path) || !actual.has(path) || !expected.get(path).equals(actual.get(path)))
+    .filter((path) => !expected.has(path) || !actual.has(path) || expected.get(path) !== actual.get(path))
     .sort();
 }
 

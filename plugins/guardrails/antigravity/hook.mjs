@@ -11,7 +11,7 @@ import { MIGRATION, checkBash, checkFileWrite, gitDirectory, isBranchSensitive }
 
 export const LOCK_FILE = join(homedir(), '.gemini', 'config', 'guardrails', 'git-lock.json');
 
-const FILE_TOOLS = new Set(['write_to_file', 'replace_file_content', 'multi_replace_file_content']);
+const FILE_TOOLS = new Set(['write_to_file', 'replace_file_content', 'multi_replace_file_content', 'write_file', 'edit_file']);
 // Antigravity ignores a hook that fails, so a check that cannot run must still answer, and never let the call through.
 const FAIL_SAFE = { decision: 'ask', reason: 'guardrails could not check this call.' };
 const SELF_UNLOCK = { decision: 'deny', reason: 'guardrails: only the user changes the git lock, from their own terminal.' };
@@ -58,8 +58,9 @@ export function decide({ toolCall, workspacePaths }, deps) {
   }
 
   if (FILE_TOOLS.has(toolCall?.name)) {
-    if (typeof args.TargetFile !== 'string') return undefined;
-    const file = toPosix(args.TargetFile);
+    const targetFile = args.TargetFile ?? args.Path;
+    if (typeof targetFile !== 'string') return undefined;
+    const file = toPosix(targetFile);
     if (LOCK_STATE.test(file)) return SELF_UNLOCK;
     if (!/database\/(?:migrations|seeders)\//.test(file)) return undefined;
     const root = rootOf(file);

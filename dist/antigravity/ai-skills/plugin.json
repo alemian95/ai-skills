@@ -1,0 +1,10 @@
+{
+  "name": "ai-skills",
+  "displayName": "AI Skills",
+  "version": "1.0.0",
+  "description": "Design principles (SOLID, DRY, YAGNI, SSOT), ADR writing, brainstorming, modern PHP 8.4+, PHP on shared hosting, Laravel architecture, developer subagents with the rules preloaded, and guardrails hooks for git, database and deploy commands.",
+  "author": {
+    "name": "Alessandro Mian"
+  },
+  "repository": "https://github.com/alemian95/ai-skills"
+}

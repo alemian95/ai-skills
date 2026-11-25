@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+// Startup point shared by web (web.php) and CLI (bin/*): PHP environment, errors, container.
+
+use App\Config\Settings;
+use DI\ContainerBuilder;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$settings = Settings::load(__DIR__);
+
+// Settings applied at runtime: they work even where .user.ini or php.ini cannot be modified.
+error_reporting(E_ALL);
+ini_set('display_errors', $settings->debug ? '1' : '0');
+ini_set('log_errors', '1');
+ini_set('error_log', $settings->varDir . '/log/php-errors.log');
+date_default_timezone_set($settings->timezone);
+
+set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
+    if ((error_reporting() & $severity) === 0) {
+        return false;
+    }
+
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+$builder = new ContainerBuilder();
+$builder->useAutowiring(true);
+$builder->useAttributes(false);
+$builder->addDefinitions(__DIR__ . '/config/container.php', [Settings::class => $settings]);
+
+return $builder->build();

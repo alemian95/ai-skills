@@ -5,7 +5,7 @@ description: Binding rules and references for writing, reviewing and refactoring
 
 # Modern PHP
 
-Claude already knows PHP. This skill sets **general rules** that apply in any context (scripts, framework-less code, any framework) and **corrects outdated habits** that circulate in tutorials and legacy code.
+You already know PHP. This skill sets **general rules** that apply in any context (scripts, framework-less code, any framework) and **corrects outdated habits** that circulate in tutorials and legacy code.
 
 ## Sources
 

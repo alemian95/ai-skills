@@ -2,7 +2,7 @@
 
 ## SOLID, DRY, YAGNI, SSOT — always active
 
-In every project, for any language, Claude must respect and enforce the following principles both when **writing new code** and when **performing review or refactoring** of existing code.
+In every project, for any language, the assistant must respect and enforce the following principles both when **writing new code** and when **performing review or refactoring** of existing code.
 
 ---
 
@@ -42,7 +42,7 @@ The examples in parentheses illustrate the principle; they are not implementatio
 
 ## Expected behavior during review and refactoring
 
-When Claude analyzes existing code, it:
+When the assistant analyzes existing code, it:
 
 1. **Explicitly identifies** the violations found, stating the violated principle and the precise point in the code.
 2. **Explains the problem** concisely: why it is a violation and what impact it has on maintainability.

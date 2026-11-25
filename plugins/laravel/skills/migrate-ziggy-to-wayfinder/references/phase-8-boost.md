@@ -17,7 +17,7 @@ sail composer require laravel/boost --dev
 sail artisan boost:install
 ```
 
-During the `boost:install` wizard, select the agents in use (Claude Code) and enable guidelines and skills.
+During the `boost:install` wizard, select the agents in use (e.g. Claude Code) and enable guidelines and skills.
 
 ### 8.2 Update the Boost resources
 
@@ -99,7 +99,7 @@ sail artisan boost:install
 
 ### 8.6 Verify that the agent follows the new instructions
 
-Open a **new session** of Claude Code (guidelines are loaded at startup) and test with a request that requires a route:
+Open a **new session** of your coding agent (guidelines are loaded at startup) and test with a request that requires a route:
 
 ```
 Add a link to the post edit page in the posts table

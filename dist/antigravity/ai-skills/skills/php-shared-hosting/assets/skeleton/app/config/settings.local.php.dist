@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+// Copy to settings.local.php and adapt. On the server create the file via FTP or from the panel's file manager.
+// The keys are the parameters of App\Config\Settings: a wrong key produces an explicit error.
+
+use Monolog\Level;
+
+return [
+    'debug' => false,
+
+    // Local development on http://localhost:
+    // 'debug' => true,
+    // 'https' => false,
+    // 'logLevel' => Level::Debug,
+
+    // MySQL (details from the hosting panel):
+    // 'database' => [
+    //     'driver' => 'pdo_mysql',
+    //     'host' => 'localhost',
+    //     'port' => 3306,
+    //     'dbname' => 'database_name',
+    //     'user' => 'user',
+    //     'password' => 'password',
+    // ],
+];
